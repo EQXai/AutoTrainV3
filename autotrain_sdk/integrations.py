@@ -385,7 +385,14 @@ def _append_to_gsheets(job, uploads: list[str] | None = None) -> Tuple[bool, str
         client = gspread.authorize(creds)
 
         # Select worksheet
-        sh = client.open_by_key(sheet_id)
+        try:
+            sh = client.open_by_key(sheet_id)
+        except Exception as exc:
+            # Handle quota exceeded (HTTP 429) or other API errors gracefully
+            exc_str = str(exc)
+            if "429" in exc_str or getattr(exc, "response", None) and getattr(exc.response, "status", None) == 429:
+                return False, "Google Sheets quota exceeded (429) – skipping log entry"
+            return False, f"Google Sheets error: {exc_str}"
         tab_name = os.getenv("AUTO_GSHEET_TAB")
         if tab_name:
             try:
@@ -505,9 +512,22 @@ def _append_to_gsheets(job, uploads: list[str] | None = None) -> Tuple[bool, str
 
         # -------------- Ensure header row --------------
         # If sheet is empty OR first row doesn't contain "JobID" treat as new
-        header_in_sheet = worksheet.row_values(1)
+        try:
+            header_in_sheet = worksheet.row_values(1)
+        except Exception as exc:
+            exc_str = str(exc)
+            if "429" in exc_str or getattr(exc, "response", None) and getattr(exc.response, "status", None) == 429:
+                return False, "Google Sheets quota exceeded (429) – skipping log entry"
+            return False, f"Google Sheets error: {exc_str}"
+
         if not header_in_sheet or "JobID" not in header_in_sheet:
-            worksheet.insert_row(header, index=1)
+            try:
+                worksheet.insert_row(header, index=1)
+            except Exception as exc:
+                exc_str = str(exc)
+                if "429" in exc_str or getattr(exc, "response", None) and getattr(exc.response, "status", None) == 429:
+                    return False, "Google Sheets quota exceeded (429) – skipping log entry"
+                return False, f"Google Sheets error: {exc_str}"
             header_in_sheet = header  # we just wrote it
 
         # Build mapping col name → index (1-based)
@@ -548,7 +568,13 @@ def _append_to_gsheets(job, uploads: list[str] | None = None) -> Tuple[bool, str
             row_padded = row + [""] * (end_col - len(row))
             worksheet.update(f"{start_a1}:{end_a1}", [row_padded])
         else:
-            worksheet.append_row(row, value_input_option="RAW")
+            try:
+                worksheet.append_row(row)
+            except Exception as exc:
+                exc_str = str(exc)
+                if "429" in exc_str or getattr(exc, "response", None) and getattr(exc.response, "status", None) == 429:
+                    return False, "Google Sheets quota exceeded (429) – skipping log entry"
+                return False, f"Google Sheets error: {exc_str}"
 
         # -------------- Deduplicate accidental duplicates --------------
         try:

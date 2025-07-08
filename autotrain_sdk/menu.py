@@ -27,6 +27,9 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskPr
 from rich.live import Live
 from rich.layout import Layout
 import time
+from rich.text import Text
+from rich.console import Group
+from rich.padding import Padding
 
 from .dataset import (
     create_input_folders,
@@ -924,24 +927,32 @@ def _datasets_menu():
         choice = q.select(
             "Choose action:",
             choices=[
-                # Creation
-                q.Separator("Creation"),
-                q.Choice("1. Create folders", "create"),
-                q.Choice("2. Build output structure", "build"),
-                q.Choice("3. Import external", "import"),
+                # 📥 GET DATASETS
+                q.Separator("╔═══════════════════╗"),
+                q.Separator("║  📥 GET DATASETS  ║"),
+                q.Separator("╚═══════════════════╝"),
+                q.Choice(" » 1. Import from external sources", "import"),
+                q.Choice("   2. Create empty folders", "create"),
+                q.Choice("   3. Configure external sources", "sources"),
+                q.Separator("─────────────────────"),
                 
-                # Management
-                q.Separator("Management"),
-                q.Choice("4. Manage dataset", "manage"),
-                q.Choice("5. Bulk prepare", "bulk"),
-                q.Choice("6. External sources", "sources"),
+                # 🔧 PREPARE DATASETS  
+                q.Separator("╔═══════════════════════╗"),
+                q.Separator("║  🔧 PREPARE DATASETS  ║"),
+                q.Separator("╚═══════════════════════╝"),
+                q.Choice("   4. Manage individual dataset", "manage"),
+                q.Choice("   5. Bulk prepare multiple datasets", "bulk"),
+                q.Choice("   6. Build output structure (all)", "build"),
+                q.Separator("─────────────────────────"),
                 
-                # Cleanup
-                q.Separator("Cleanup"),
-                q.Choice("7. Clean workspace", "clean"),
+                # 🗑️ CLEANUP
+                q.Separator("╔═══════════════╗"),
+                q.Separator("║  🗑️ CLEANUP  ║"),
+                q.Separator("╚═══════════════╝"),
+                q.Choice("   7. Clean workspace", "clean"),
+                q.Separator("─────────────────"),
                 
-                q.Separator(),
-                q.Choice("0. Back", "back"),
+                q.Choice("   0. Back to main menu", "back"),
             ],
         ).ask()
 
@@ -1198,17 +1209,94 @@ def _bulk_prepare_menu():
     if not sel:
         return
 
-    overwrite_capt = q.confirm("Generate captions? (Yes = generate/overwrite, No = skip captioning)", default=True).ask()
-    max_tok = int(q.text("Max tokens (32-512):", default="128").ask() or 128)
+    # Check for existing caption files in selected datasets
+    def has_txt_files(dataset_name):
+        """Check if dataset has existing .txt caption files"""
+        # Check in input/ directory first
+        input_path = _INPUT_DIR / dataset_name
+        if input_path.exists():
+            txt_files = list(input_path.glob("*.txt"))
+            if txt_files:
+                return True, len(txt_files), "input/"
+        
+        # Check in external sources
+        external_mapping = _list_ext()
+        if dataset_name in external_mapping:
+            external_path = Path(external_mapping[dataset_name])
+            if external_path.exists():
+                txt_files = list(external_path.glob("*.txt"))
+                if txt_files:
+                    return True, len(txt_files), str(external_path)
+        
+        return False, 0, ""
+
+    # Analyze selected datasets for existing caption files
+    datasets_with_captions = []
+    total_txt_files = 0
+    
+    for dataset_name in sel:
+        has_txt, count, location = has_txt_files(dataset_name)
+        if has_txt:
+            datasets_with_captions.append((dataset_name, count, location))
+            total_txt_files += count
+
+    # Improved caption generation options
+    console.print("\n[bold blue]📝 Caption Generation Options[/bold blue]")
+    console.print("[dim]Choose how to handle caption generation for all selected datasets:[/dim]")
+    
+    # Show information about existing caption files
+    if datasets_with_captions:
+        console.print(f"\n[yellow]⚠️  Found existing caption files:[/yellow]")
+        for dataset_name, count, location in datasets_with_captions:
+            console.print(f"  • [cyan]{dataset_name}[/cyan]: {count} .txt files in {location}")
+        console.print(f"[dim]Total: {total_txt_files} caption files across {len(datasets_with_captions)} dataset(s)[/dim]")
+    else:
+        console.print(f"\n[green]✓ No existing caption files found in selected datasets[/green]")
+    
+    caption_mode = q.select(
+        "Caption generation mode:",
+        choices=[
+            q.Choice("🎯 Generate with custom triggers (ask for each dataset)", "custom"),
+            q.Choice("📁 Generate using dataset names as triggers", "auto"),
+            q.Choice("⏭️  Skip caption generation entirely", "skip"),
+        ],
+        default="custom"
+    ).ask()
+
+    if caption_mode == "skip":
+        generate_captions = False
+        overwrite_capt = False
+    else:
+        generate_captions = True
+        # Only ask about overwriting if there are existing caption files
+        if datasets_with_captions:
+            console.print(f"\n[yellow]Found {total_txt_files} existing caption files that could be overwritten.[/yellow]")
+            overwrite_capt = q.confirm("Overwrite existing caption files?", default=True).ask()
+        else:
+            overwrite_capt = True  # No files to overwrite, so this doesn't matter
+            console.print(f"[dim]No existing caption files to overwrite - proceeding with caption generation[/dim]")
+    
+    max_tok = int(q.text("Max tokens for captions (32-512):", default="128").ask() or 128) if generate_captions else 128
 
     # For each dataset ask optional trigger / reps / resolution
     rows = []
     for n in sel:
-        console.print(f"\n[bold cyan]{n}[/bold cyan]")
-        trig = q.text("Trigger (blank = skip captioning):", default="").ask()
+        console.print(f"\n[bold cyan]📂 {n}[/bold cyan]")
+        
+        if caption_mode == "custom":
+            console.print(f"[dim]Leave trigger empty to use dataset name '{n}' as trigger[/dim]")
+            trig = q.text("Custom trigger (blank = use dataset name):", default="").ask()
+            # If empty, use dataset name as trigger
+            final_trigger = trig.strip() if trig.strip() else n
+        elif caption_mode == "auto":
+            final_trigger = n
+            console.print(f"[green]✓ Will use '{n}' as trigger[/green]")
+        else:  # skip
+            final_trigger = ""
+        
         reps = int(q.text("Repetitions (times each image repeats):", default="30").ask() or 30)
         reso = q.text("Crop resolution WxH (blank = none):", default="").ask()
-        rows.append((n, trig.strip(), reps, reso.strip()))
+        rows.append((n, final_trigger, reps, reso.strip()))
 
     # Execute with progress bar
     from autotrain_sdk.gradio_app import cb_build_output_single as _cb_build_single
@@ -1238,11 +1326,13 @@ def _bulk_prepare_menu():
             
             # Procesar dataset (ahora está garantizado en input/)
             cap_msg = ""
-            if trig and overwrite_capt:
+            if generate_captions and trig:
                 n_caps = _rename_and_caption(ds, trig, overwrite=overwrite_capt, max_new_tokens=max_tok)
-                cap_msg = f" · {n_caps} caption(s)"
-            elif trig and not overwrite_capt:
-                cap_msg = " · (captions skipped - overwrite disabled)"
+                cap_msg = f" · {n_caps} caption(s) with trigger '{trig}'"
+            elif generate_captions and not trig:
+                cap_msg = " · (captions skipped - no trigger provided)"
+            else:
+                cap_msg = " · (captions skipped by user choice)"
 
             msg_build = _cb_build_single(ds, reps, res_str=(reso or None))
             
@@ -1295,23 +1385,31 @@ def _presets_menu():
         choice = q.select(
             "Choose action:",
             choices=[
-                # Generation
-                q.Separator("Generation"),
-                q.Choice("1. Regenerate all", "regen_all"),
-                q.Choice("2. Regenerate for dataset", "regen_dataset"),
+                # 🔄 GENERATION
+                q.Separator("╔═══════════════════╗"),
+                q.Separator("║  🔄 GENERATION    ║"),
+                q.Separator("╚═══════════════════╝"),
+                q.Choice(" » 1. Regenerate all presets", "regen_all"),
+                q.Choice("   2. Regenerate for specific dataset", "regen_dataset"),
+                q.Separator("─────────────────────"),
                 
-                # Viewing
-                q.Separator("Viewing"),
-                q.Choice("3. List presets", "list"),
-                q.Choice("4. View details", "view"),
+                # 👁️ VIEWING
+                q.Separator("╔═══════════════╗"),
+                q.Separator("║  👁️ VIEWING   ║"),
+                q.Separator("╚═══════════════╝"),
+                q.Choice("   3. List all presets", "list"),
+                q.Choice("   4. View preset details", "view"),
+                q.Separator("─────────────────"),
                 
-                # Editing
-                q.Separator("Editing"),
-                q.Choice("5. Edit preset", "edit"),
-                q.Choice("6. Clone preset", "clone"),
+                # ✏️ EDITING
+                q.Separator("╔═══════════════╗"),
+                q.Separator("║  ✏️ EDITING   ║"),
+                q.Separator("╚═══════════════╝"),
+                q.Choice("   5. Edit preset", "edit"),
+                q.Choice("   6. Clone preset", "clone"),
+                q.Separator("─────────────────"),
                 
-                q.Separator(),
-                q.Choice("0. Back", "back"),
+                q.Choice("   0. Back to main menu", "back"),
             ],
         ).ask()
 
@@ -1452,17 +1550,22 @@ def _training_menu():
             "Choose training action:",
             choices=[
                 # 🚀 TRAINING MODES
-                q.Separator("🚀 TRAINING MODES"),
-                q.Choice("1. Single Mode", "single_mode"),
-                q.Choice("2. Batch Mode", "batch_mode"),
+                q.Separator("╔═══════════════════════╗"),
+                q.Separator("║  🚀 TRAINING MODES    ║"),
+                q.Separator("╚═══════════════════════╝"),
+                q.Choice(" » 1. Single dataset training", "single_mode"),
+                q.Choice("   2. Batch training (multiple datasets)", "batch_mode"),
+                q.Separator("─────────────────────────"),
                 
                 # 📊 ANALYSIS
-                q.Separator("📊 ANALYSIS"),
-                q.Choice("3. Dataset Analysis", "dataset_analysis"),
-                q.Choice("4. Training Estimation", "training_estimation"),
+                q.Separator("╔═══════════════╗"),
+                q.Separator("║  📊 ANALYSIS  ║"),
+                q.Separator("╚═══════════════╝"),
+                q.Choice("   3. Dataset analysis", "dataset_analysis"),
+                q.Choice("   4. Training time estimation", "training_estimation"),
+                q.Separator("─────────────────"),
                 
-                q.Separator(),
-                q.Choice("0. Back", "back"),
+                q.Choice("   0. Back to main menu", "back"),
             ],
         ).ask()
         
@@ -1494,21 +1597,29 @@ def _jobs_menu():
             "Choose job action:",
             choices=[
                 # 📋 QUEUE MANAGEMENT
-                q.Separator("📋 QUEUE MANAGEMENT"),
-                q.Choice("1. View Queue", "view_queue"),
-                q.Choice("2. Cancel/Remove Jobs", "cancel_remove"),
+                q.Separator("╔═══════════════════════╗"),
+                q.Separator("║  📋 QUEUE MANAGEMENT  ║"),
+                q.Separator("╚═══════════════════════╝"),
+                q.Choice(" » 1. View training queue", "view_queue"),
+                q.Choice("   2. Cancel/Remove jobs", "cancel_remove"),
+                q.Separator("─────────────────────────"),
                 
                 # 🔍 MONITORING
-                q.Separator("🔍 MONITORING"),
-                q.Choice("3. Live Monitor", "live_monitor"),
-                q.Choice("4. Job Details", "job_details"),
+                q.Separator("╔═══════════════════╗"),
+                q.Separator("║  🔍 MONITORING    ║"),
+                q.Separator("╚═══════════════════╝"),
+                q.Choice("   3. Live monitor", "live_monitor"),
+                q.Choice("   4. Job details", "job_details"),
+                q.Separator("─────────────────────"),
                 
                 # 📈 ANALYSIS
-                q.Separator("📈 ANALYSIS"),
-                q.Choice("5. Training History", "training_history"),
+                q.Separator("╔═══════════════╗"),
+                q.Separator("║  📈 ANALYSIS  ║"),
+                q.Separator("╚═══════════════╝"),
+                q.Choice("   5. Training history", "training_history"),
+                q.Separator("─────────────────"),
                 
-                q.Separator(),
-                q.Choice("0. Back", "back"),
+                q.Choice("   0. Back to main menu", "back"),
             ],
         ).ask()
         
@@ -2586,14 +2697,16 @@ def _integrations_menu():
         action = q.select(
             "Choose integration to configure:",
             choices=[
-                # Services
-                q.Separator("Services"),
-                q.Choice("1. Google Sheets", "gsheets"),
-                q.Choice("2. Hugging Face Hub", "huggingface"),
-                q.Choice("3. Remote output", "remote"),
+                # 🔗 EXTERNAL SERVICES
+                q.Separator("╔═══════════════════════╗"),
+                q.Separator("║  🔗 EXTERNAL SERVICES ║"),
+                q.Separator("╚═══════════════════════╝"),
+                q.Choice(" » 1. Google Sheets integration", "gsheets"),
+                q.Choice("   2. Hugging Face Hub", "huggingface"),
+                q.Choice("   3. Remote output storage", "remote"),
+                q.Separator("─────────────────────────"),
                 
-                q.Separator(),
-                q.Choice("0. Back", "back"),
+                q.Choice("   0. Back to main menu", "back"),
             ],
         ).ask()
 
@@ -2749,17 +2862,22 @@ def _experiments_menu():
             "Choose action:",
             choices=[
                 # 🚀 EXPERIMENT MANAGEMENT
-                q.Separator("🚀 EXPERIMENT MANAGEMENT"),
-                q.Choice("1. Launch new experiment", "launch"),
-                q.Choice("2. List experiments", "list"),
-                q.Choice("3. Compare variants", "compare"),
+                q.Separator("╔═══════════════════════════╗"),
+                q.Separator("║  🚀 EXPERIMENT MANAGEMENT ║"),
+                q.Separator("╚═══════════════════════════╝"),
+                q.Choice(" » 1. Launch new experiment", "launch"),
+                q.Choice("   2. List experiments", "list"),
+                q.Choice("   3. Compare variants", "compare"),
+                q.Separator("───────────────────────────"),
                 
                 # 🗑️ CLEANUP
-                q.Separator("🗑️ CLEANUP"),
-                q.Choice("4. Clear experiments", "clear"),
+                q.Separator("╔═══════════════╗"),
+                q.Separator("║  🗑️ CLEANUP  ║"),
+                q.Separator("╚═══════════════╝"),
+                q.Choice("   4. Clear experiments", "clear"),
+                q.Separator("─────────────────"),
                 
-                q.Separator(),
-                q.Choice("0. Back to main menu", "back"),
+                q.Choice("   0. Back to main menu", "back"),
             ],
         ).ask()
 
@@ -2935,14 +3053,20 @@ def _organizer_menu():
             "Choose action:",
             choices=[
                 # 👁️ VIEWING
-                q.Separator("👁️ VIEWING"),
-                q.Choice("1. List runs", "list"),
-                q.Choice("2. Show run details", "details"),
-                q.Choice("3. Search / Filter", "search"),
+                q.Separator("╔═══════════════╗"),
+                q.Separator("║  👁️ VIEWING   ║"),
+                q.Separator("╚═══════════════╝"),
+                q.Choice(" » 1. List runs", "list"),
+                q.Choice("   2. Show run details", "details"),
+                q.Choice("   3. Search / Filter", "search"),
+                q.Separator("─────────────────"),
                 
                 # 🗑️ CLEANUP
-                q.Separator("🗑️ CLEANUP"),
-                q.Choice("4. Clear records", "clear"),
+                q.Separator("╔═══════════════╗"),
+                q.Separator("║  🗑️ CLEANUP  ║"),
+                q.Separator("╚═══════════════╝"),
+                q.Choice("   4. Clear records", "clear"),
+                q.Separator("─────────────────"),
                 
                 q.Separator(),
                 q.Choice("0. Back to main menu", "back"),
@@ -3598,7 +3722,9 @@ def _training_monitor_menu():
     time.sleep(2)
     
     try:
-        with Live(console=console, refresh_per_second=1, auto_refresh=False) as live:
+        # Use full screen mode so previous frames are fully cleared even if the renderable height changes.
+        # This avoids duplicated panels (e.g., system stats) when switching between jobs in the live monitor.
+        with Live(console=console, refresh_per_second=1, auto_refresh=False, screen=True) as live:
             while True:
                 # Monitor current job
                 job_completed = False
@@ -3629,7 +3755,21 @@ def _training_monitor_menu():
                     
                     # Create and display job info
                     try:
-                        content = _create_simple_job_display(updated_job)
+                        from rich.padding import Padding
+                        stats_panel = _create_system_stats_panel()
+                        # Add one line of top padding so the upper border isn't cut off in full-screen mode
+                        content = Group(Padding(stats_panel, (1, 0, 0, 0)), _create_simple_job_display(updated_job))
+                        # Build list of renderables for Live output
+                        renderables = [
+                            Padding(stats_panel, (1, 0, 0, 0)),
+                            _create_simple_job_display(updated_job),
+                        ]
+
+                        upcoming_tbl = _create_upcoming_jobs_table()
+                        if upcoming_tbl is not None:
+                            renderables.append(upcoming_tbl)
+
+                        content = Group(*renderables)
                         # Content is now a Group object that Rich can render directly
                         live.update(content)
                         live.refresh()
@@ -3701,19 +3841,24 @@ def _training_history_menu():
             "Choose action:",
             choices=[
                 # 📜 VIEWING
-                q.Separator("📜 VIEWING"),
-                q.Choice("1. View All Jobs", "view_all"),
-                q.Choice("2. View Completed Only", "view_done"),
-                q.Choice("3. View Failed Only", "view_failed"),
-                q.Choice("4. Filter by Dataset", "filter_dataset"),
-                q.Choice("5. Filter by Profile", "filter_profile"),
+                q.Separator("╔═══════════════╗"),
+                q.Separator("║  📜 VIEWING   ║"),
+                q.Separator("╚═══════════════╝"),
+                q.Choice(" » 1. View All Jobs", "view_all"),
+                q.Choice("   2. View Completed Only", "view_done"),
+                q.Choice("   3. View Failed Only", "view_failed"),
+                q.Choice("   4. Filter by Dataset", "filter_dataset"),
+                q.Choice("   5. Filter by Profile", "filter_profile"),
+                q.Separator("─────────────────"),
                 
                 # 🧹 CLEANUP
-                q.Separator("🧹 CLEANUP"),
-                q.Choice("6. Clean Completed Jobs", "clean_completed"),
+                q.Separator("╔═══════════════╗"),
+                q.Separator("║  🧹 CLEANUP   ║"),
+                q.Separator("╚═══════════════╝"),
+                q.Choice("   6. Clean Completed Jobs", "clean_completed"),
+                q.Separator("─────────────────"),
                 
-                q.Separator(),
-                q.Choice("0. Back", "back"),
+                q.Choice("   0. Back", "back"),
             ],
         ).ask()
         
@@ -4012,6 +4157,73 @@ def _format_enhanced_metrics_fallback(metrics_data: dict) -> str:
 # ---------------------------------------------------------------------------
 # Updated helper functions to use fallbacks
 # ---------------------------------------------------------------------------
+
+def _create_system_stats_panel():
+    """Return a Rich Panel with up-to-date system stats summary (usable inside Live refresh)."""
+    try:
+        stats = _get_system_stats()
+    except Exception:
+        # Fallback empty panel on error
+        return Panel("[dim]Stats unavailable[/dim]", border_style="dim blue")
+
+    parts: list[str] = []
+    if stats.get("input_datasets", 0):
+        parts.append(f"Datasets: {stats['input_datasets']}")
+    if stats.get("pending_datasets", 0):
+        parts.append(f"Pending datasets: {stats['pending_datasets']}")
+    if stats.get("presets", 0):
+        parts.append(f"Presets: {stats['presets']}")
+
+    # Jobs info
+    running = stats.get("running_jobs", 0)
+    pending = stats.get("pending_jobs", 0)
+    if running or pending:
+        if running and pending:
+            parts.append(f"Jobs: {running} running, {pending} queued")
+        elif running:
+            parts.append(f"Jobs: {running} running")
+        else:
+            parts.append(f"Jobs: {pending} queued")
+
+    summary = " • ".join(parts) if parts else "No stats"  # Graceful fallback
+    return Panel(summary, style="dim", border_style="dim blue", padding=(0, 1))
+
+# ---------------------------------------------------------------------------
+# Upcoming jobs table (for Live Monitor)
+# ---------------------------------------------------------------------------
+
+def _create_upcoming_jobs_table(limit: int = 6) -> Table | None:
+    """Return a Table with the next pending jobs after the current one.
+
+    If there are no pending jobs, returns None so caller can skip rendering.
+    """
+
+    jobs = _JOB_MANAGER.list_jobs()
+    pending_jobs = [j for j in jobs if j.status == JobStatus.PENDING]
+
+    if not pending_jobs:
+        return None
+
+    table = Table(
+        show_header=True,
+        header_style="dim",
+        box=None,
+        title="📅 Upcoming Jobs",
+    )
+    table.add_column("Job", style="cyan", width=8)
+    table.add_column("Dataset", style="blue", width=12)
+    table.add_column("Profile", style="magenta", width=10)
+    table.add_column("ETA", style="yellow", width=8)
+
+    for idx, job in enumerate(pending_jobs[:limit], 1):
+        # Rough ETA: assuming ~2h per job position (same as in compact table)
+        eta_text = f"~{idx*2}h"
+        table.add_row(job.id, job.dataset[:12], job.profile, eta_text)
+
+    if len(pending_jobs) > limit:
+        table.add_row("…", f"+{len(pending_jobs)-limit} more", "", "")
+
+    return table
 
 if __name__ == "__main__":
     try:
