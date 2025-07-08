@@ -1,13 +1,13 @@
 # AutoTrainV3
 
-AutoTrainV3 is a Python toolkit that simplifies training of Stable Diffusion models (Flux, FluxLORA, SDXL) using the `sd-scripts` framework. It provides three user interfaces: Gradio Web UI, CLI, and Interactive Menu.
+AutoTrainV3 is a Python toolkit that simplifies training of SDXL/Flux using the `sd-scripts` framework. It provides three user interfaces: Gradio Web UI, CLI, and Interactive Menu.
 
 ---
 
 ## 🛠️ Installation
 
 ### Requirements
-- **OS**: Linux (Ubuntu 20.04+) or Windows with WSL2
+- **OS**: Linux (Ubuntu 22.04+) or Windows with WSL2
 - **GPU**: NVIDIA with 8GB+ VRAM
 - **Python**: 3.9+
 - **CUDA**: 12.8+ with compatible drivers
@@ -28,7 +28,7 @@ The setup script will automatically:
 - ✅ Install PyTorch with CUDA 12.8
 - ✅ Install xformers
 - ✅ Install all dependencies
-- ✅ Download base Flux models
+- ✅ Download models
 - ✅ Verify installation
 
 ---
@@ -38,7 +38,7 @@ The setup script will automatically:
 After installation, your project structure will be:
 
 ```
-AutoTrainV2/
+AutoTrainV3/
 ├── 📁 input/                    # Raw datasets (place your images here)
 │   └── dataset_name/
 │       ├── image_01.jpg         # Training images
