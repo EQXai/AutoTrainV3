@@ -16,7 +16,7 @@ AutoTrainV3 is a Python toolkit that simplifies training of SDXL/Flux using the 
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/yourname/AutoTrainV2.git
+git clone https://github.com/yourname/AutoTrainV3.git
 cd AutoTrainV3
 
 # 2. Run the automated setup script
