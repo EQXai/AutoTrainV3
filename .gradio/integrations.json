@@ -1,0 +1,12 @@
+{
+  "AUTO_HF_TOKEN": "mmm",
+  "AUTO_HF_REPO": null,
+  "AUTO_HF_ENABLE": "0",
+  "AUTO_HF_PRIVATE": "0",
+  "AUTO_REMOTE_BASE": "/home/eqx/remote_output",
+  "AUTO_REMOTE_DIRECT": "1",
+  "AUTO_GSHEET_CRED": "/home/eqx/sheets/autotrainv2-91cdf614a30f.json",
+  "AUTO_GSHEET_ID": "1mCl7WTOd1KAp-f73rzGLWZ_ob4KpggBSOzX8CT8WP34",
+  "AUTO_GSHEET_TAB": "MiHoja",
+  "AUTO_GSHEET_KEYS": "Timestamp,Dataset,Profile,Status,Images,Steps,lr,batch,epochs,resolution,network_dim,network_alpha,mixed_precision,FID,CLIP,JobID,Uploads"
+}

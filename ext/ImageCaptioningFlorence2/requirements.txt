@@ -1,0 +1,6 @@
+transformers
+torch
+timm
+pillow
+gradio
+hf_xet

@@ -1,0 +1,712 @@
+[
+  {
+    "id": "3b7d6d78",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/remote_output/testX_FluxLORA_d931e5ab/config.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_d931e5ab",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": null
+  },
+  {
+    "id": "ab75b47a",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/remote_output/testX_FluxLORA_087bb9c5/config.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_087bb9c5",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": null
+  },
+  {
+    "id": "89375aaa",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_28363ec0_0.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_92f1554b",
+    "status": "canceled",
+    "experiment_id": "28363ec0",
+    "gpu_ids": null
+  },
+  {
+    "id": "b10ed402",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_28363ec0_1.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_ef723c7b",
+    "status": "canceled",
+    "experiment_id": "28363ec0",
+    "gpu_ids": null
+  },
+  {
+    "id": "234d2da4",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_28363ec0_2.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_89b6c418",
+    "status": "canceled",
+    "experiment_id": "28363ec0",
+    "gpu_ids": null
+  },
+  {
+    "id": "fd4a4040",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_28363ec0_3.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_dec66a36",
+    "status": "canceled",
+    "experiment_id": "28363ec0",
+    "gpu_ids": null
+  },
+  {
+    "id": "d7feac19",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_28363ec0_4.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_58683330",
+    "status": "canceled",
+    "experiment_id": "28363ec0",
+    "gpu_ids": null
+  },
+  {
+    "id": "d6da88a2",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_28363ec0_5.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_cd48aae4",
+    "status": "canceled",
+    "experiment_id": "28363ec0",
+    "gpu_ids": null
+  },
+  {
+    "id": "8377ba5a",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_0e46c1d4_0.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_85543ed9",
+    "status": "canceled",
+    "experiment_id": "0e46c1d4",
+    "gpu_ids": null
+  },
+  {
+    "id": "80cf4d95",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_0e46c1d4_1.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_81a6875f",
+    "status": "canceled",
+    "experiment_id": "0e46c1d4",
+    "gpu_ids": null
+  },
+  {
+    "id": "a7092855",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_0e46c1d4_2.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_103e472b",
+    "status": "canceled",
+    "experiment_id": "0e46c1d4",
+    "gpu_ids": null
+  },
+  {
+    "id": "0bae87e7",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_0e46c1d4_3.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_45eb0288",
+    "status": "canceled",
+    "experiment_id": "0e46c1d4",
+    "gpu_ids": null
+  },
+  {
+    "id": "c6391a17",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_0e46c1d4_4.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_a91dbf4b",
+    "status": "canceled",
+    "experiment_id": "0e46c1d4",
+    "gpu_ids": null
+  },
+  {
+    "id": "34b8ff10",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_0e46c1d4_5.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_0d64960a",
+    "status": "canceled",
+    "experiment_id": "0e46c1d4",
+    "gpu_ids": null
+  },
+  {
+    "id": "9b00a7b9",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_1df630f5_0.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_526b1c7d",
+    "status": "canceled",
+    "experiment_id": "1df630f5",
+    "gpu_ids": null
+  },
+  {
+    "id": "a7933879",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_1df630f5_1.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_eef98b06",
+    "status": "canceled",
+    "experiment_id": "1df630f5",
+    "gpu_ids": null
+  },
+  {
+    "id": "88d48792",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_1df630f5_2.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_71821ed9",
+    "status": "canceled",
+    "experiment_id": "1df630f5",
+    "gpu_ids": null
+  },
+  {
+    "id": "bb67acaa",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_1df630f5_3.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_1a592bca",
+    "status": "canceled",
+    "experiment_id": "1df630f5",
+    "gpu_ids": null
+  },
+  {
+    "id": "83005e6e",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_1df630f5_4.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_bdd4ae57",
+    "status": "canceled",
+    "experiment_id": "1df630f5",
+    "gpu_ids": null
+  },
+  {
+    "id": "545706c5",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_1df630f5_5.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_08980773",
+    "status": "canceled",
+    "experiment_id": "1df630f5",
+    "gpu_ids": null
+  },
+  {
+    "id": "0fec4597",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_cd95a9d4_0.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_ecd945dc",
+    "status": "done",
+    "experiment_id": "cd95a9d4",
+    "gpu_ids": null
+  },
+  {
+    "id": "5b3b68d2",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_cd95a9d4_1.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_b4a8f048",
+    "status": "done",
+    "experiment_id": "cd95a9d4",
+    "gpu_ids": null
+  },
+  {
+    "id": "7cfd4afc",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_820e39bd_0.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_44451e83",
+    "status": "done",
+    "experiment_id": "820e39bd",
+    "gpu_ids": null
+  },
+  {
+    "id": "9f5ccf49",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_820e39bd_1.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_f5e4a1a2",
+    "status": "done",
+    "experiment_id": "820e39bd",
+    "gpu_ids": null
+  },
+  {
+    "id": "bea2cc30",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_820e39bd_2.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_9b1b48d3",
+    "status": "done",
+    "experiment_id": "820e39bd",
+    "gpu_ids": null
+  },
+  {
+    "id": "d545978e",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_820e39bd_3.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_cdb3b9d5",
+    "status": "done",
+    "experiment_id": "820e39bd",
+    "gpu_ids": null
+  },
+  {
+    "id": "b0fe57cd",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_820e39bd_4.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_14da2457",
+    "status": "done",
+    "experiment_id": "820e39bd",
+    "gpu_ids": null
+  },
+  {
+    "id": "d74413bd",
+    "dataset": "testX",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_820e39bd_5.toml",
+    "run_dir": "/home/eqx/remote_output/testX_FluxLORA_57f01261",
+    "status": "done",
+    "experiment_id": "820e39bd",
+    "gpu_ids": null
+  },
+  {
+    "id": "654f0ef4",
+    "dataset": "dl4r0s4",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/.gradio/experiments/tmp_911ae16a_0.toml",
+    "run_dir": "/home/eqx/remote_output/dl4r0s4_FluxLORA_c41817f7",
+    "status": "canceled",
+    "experiment_id": "911ae16a",
+    "gpu_ids": null
+  },
+  {
+    "id": "6307a099",
+    "dataset": "m14w00dh4ll",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/m14w00dh4ll.toml",
+    "run_dir": "/home/eqx/remote_output/m14w00dh4ll_FluxLORA_d0ca3722",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "0fe1254d",
+    "dataset": "t1st",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/t1st.toml",
+    "run_dir": "/home/eqx/remote_output/t1st_FluxLORA_67a33487",
+    "status": "failed",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "621a4a99",
+    "dataset": "t1st",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/t1st.toml",
+    "run_dir": "/home/eqx/remote_output/t1st_FluxLORA_2c3b1187",
+    "status": "failed",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "da95ce82",
+    "dataset": "t1st",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/t1st.toml",
+    "run_dir": "/home/eqx/remote_output/t1st_FluxLORA_9c9dfca3",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "a64a064a",
+    "dataset": "b09g13",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/remote_output/b09g13_FluxLORA_7cd4728c/config.toml",
+    "run_dir": "/home/eqx/remote_output/b09g13_FluxLORA_7cd4728c",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "f1f736ee",
+    "dataset": "b09g13",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/b09g13.toml",
+    "run_dir": "/home/eqx/remote_output/b09g13_FluxLORA_1a991d23",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "5c938ebf",
+    "dataset": "t1st",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/t1st.toml",
+    "run_dir": "/home/eqx/remote_output/t1st_FluxLORA_2cb8c300",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "b08c2fd6",
+    "dataset": "ch3ls1",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/ch3ls1.toml",
+    "run_dir": "/home/eqx/remote_output/ch3ls1_FluxLORA_57d11b78",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "01d809d4",
+    "dataset": "sophieraiin",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/sophieraiin.toml",
+    "run_dir": "/home/eqx/remote_output/sophieraiin_FluxLORA_d28e660b",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "764921ca",
+    "dataset": "dl4r0s4",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/dl4r0s4.toml",
+    "run_dir": "/home/eqx/remote_output/dl4r0s4_FluxLORA_fd1378c2",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "0e4077ca",
+    "dataset": "b09g13",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/b09g13.toml",
+    "run_dir": "/home/eqx/remote_output/b09g13_FluxLORA_fcc8ed53",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "3f967ecf",
+    "dataset": "t3t4s",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/t3t4s.toml",
+    "run_dir": "/home/eqx/remote_output/t3t4s_FluxLORA_ca9b6e0b",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "b2af0b06",
+    "dataset": "m14w00dh4ll",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/m14w00dh4ll.toml",
+    "run_dir": "/home/eqx/remote_output/m14w00dh4ll_FluxLORA_c88cc460",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "bc335489",
+    "dataset": "t1st",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/t1st.toml",
+    "run_dir": "/home/eqx/remote_output/t1st_FluxLORA_15022996",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "12f1a1a2",
+    "dataset": "ch3ls1",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/ch3ls1.toml",
+    "run_dir": "/home/eqx/remote_output/ch3ls1_FluxLORA_6c0630a3",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "284084e1",
+    "dataset": "sophieraiin",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/sophieraiin.toml",
+    "run_dir": "/home/eqx/remote_output/sophieraiin_FluxLORA_880a769e",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "40cc0d6e",
+    "dataset": "dl4r0s4",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/dl4r0s4.toml",
+    "run_dir": "/home/eqx/remote_output/dl4r0s4_FluxLORA_f00c6274",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "a6e2e6a5",
+    "dataset": "b09g13",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/b09g13.toml",
+    "run_dir": "/home/eqx/remote_output/b09g13_FluxLORA_46044126",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "743e4aef",
+    "dataset": "t3t4s",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/t3t4s.toml",
+    "run_dir": "/home/eqx/remote_output/t3t4s_FluxLORA_846184d1",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "c827f1ce",
+    "dataset": "m14w00dh4ll",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/m14w00dh4ll.toml",
+    "run_dir": "/home/eqx/remote_output/m14w00dh4ll_FluxLORA_a8a59b38",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "a77828d9",
+    "dataset": "t1st",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/t1st.toml",
+    "run_dir": "/home/eqx/remote_output/t1st_FluxLORA_caaa5e60",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "966ca27b",
+    "dataset": "ch3ls1",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/ch3ls1.toml",
+    "run_dir": "/home/eqx/remote_output/ch3ls1_FluxLORA_e1739236",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "58bed9c7",
+    "dataset": "sophieraiin",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/sophieraiin.toml",
+    "run_dir": "/home/eqx/remote_output/sophieraiin_FluxLORA_707629f5",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "79600dd2",
+    "dataset": "dl4r0s4",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/dl4r0s4.toml",
+    "run_dir": "/home/eqx/remote_output/dl4r0s4_FluxLORA_e5d4427f",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "af621f17",
+    "dataset": "b09g13",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/b09g13.toml",
+    "run_dir": "/home/eqx/remote_output/b09g13_FluxLORA_a31bb3a8",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "72b39f0c",
+    "dataset": "t3t4s",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/t3t4s.toml",
+    "run_dir": "/home/eqx/remote_output/t3t4s_FluxLORA_ff23b0b1",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "c722352d",
+    "dataset": "m14w00dh4ll",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/m14w00dh4ll.toml",
+    "run_dir": "/home/eqx/remote_output/m14w00dh4ll_FluxLORA_250276a8",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "999cb717",
+    "dataset": "t1st",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/t1st.toml",
+    "run_dir": "/home/eqx/remote_output/t1st_FluxLORA_cb4d6615",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "f83a9696",
+    "dataset": "ch3ls1",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/ch3ls1.toml",
+    "run_dir": "/home/eqx/remote_output/ch3ls1_FluxLORA_3172e6c2",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "28369427",
+    "dataset": "sophieraiin",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/sophieraiin.toml",
+    "run_dir": "/home/eqx/remote_output/sophieraiin_FluxLORA_e6f67477",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "6f63bac0",
+    "dataset": "dl4r0s4",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/dl4r0s4.toml",
+    "run_dir": "/home/eqx/remote_output/dl4r0s4_FluxLORA_146dac62",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "94f3877f",
+    "dataset": "b09g13",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/b09g13.toml",
+    "run_dir": "/home/eqx/remote_output/b09g13_FluxLORA_53e5687e",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "b1b094b1",
+    "dataset": "t3t4s",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/t3t4s.toml",
+    "run_dir": "/home/eqx/remote_output/t3t4s_FluxLORA_efb3337b",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "8601258a",
+    "dataset": "m14w00dh4ll",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/m14w00dh4ll.toml",
+    "run_dir": "/home/eqx/remote_output/m14w00dh4ll_FluxLORA_6611b9c9",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "a0f6630c",
+    "dataset": "t1st",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/t1st.toml",
+    "run_dir": "/home/eqx/remote_output/t1st_FluxLORA_df3a0e53",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": null
+  },
+  {
+    "id": "c550f5f7",
+    "dataset": "t1st",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/t1st.toml",
+    "run_dir": "/home/eqx/remote_output/t1st_FluxLORA_7ad735d5",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "3eebb0ec",
+    "dataset": "ch3ls1",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/ch3ls1.toml",
+    "run_dir": "/home/eqx/remote_output/ch3ls1_FluxLORA_9539996b",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "b9740e89",
+    "dataset": "sophieraiin",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/sophieraiin.toml",
+    "run_dir": "/home/eqx/remote_output/sophieraiin_FluxLORA_9893bc39",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "caaf0848",
+    "dataset": "dl4r0s4",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/dl4r0s4.toml",
+    "run_dir": "/home/eqx/remote_output/dl4r0s4_FluxLORA_f90e1534",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "d1a2f11f",
+    "dataset": "b09g13",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/b09g13.toml",
+    "run_dir": "/home/eqx/remote_output/b09g13_FluxLORA_ce10da7e",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "3460cacc",
+    "dataset": "t3t4s",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/t3t4s.toml",
+    "run_dir": "/home/eqx/remote_output/t3t4s_FluxLORA_6027fbb8",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  },
+  {
+    "id": "94f68632",
+    "dataset": "m14w00dh4ll",
+    "profile": "FluxLORA",
+    "toml_path": "/home/eqx/AutoTrainV2/BatchConfig/FluxLORA/m14w00dh4ll.toml",
+    "run_dir": "/home/eqx/remote_output/m14w00dh4ll_FluxLORA_38d68b7c",
+    "status": "canceled",
+    "experiment_id": null,
+    "gpu_ids": "0"
+  }
+]
