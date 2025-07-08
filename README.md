@@ -1,6 +1,6 @@
-# AutoTrainV2
+# AutoTrainV3
 
-AutoTrainV2 is a Python toolkit that simplifies training of Stable Diffusion models (Flux, FluxLORA, SDXL) using the `sd-scripts` framework. It provides three user interfaces: Gradio Web UI, CLI, and Interactive Menu.
+AutoTrainV3 is a Python toolkit that simplifies training of Stable Diffusion models (Flux, FluxLORA, SDXL) using the `sd-scripts` framework. It provides three user interfaces: Gradio Web UI, CLI, and Interactive Menu.
 
 ---
 
@@ -17,7 +17,7 @@ AutoTrainV2 is a Python toolkit that simplifies training of Stable Diffusion mod
 ```bash
 # 1. Clone the repository
 git clone https://github.com/yourname/AutoTrainV2.git
-cd AutoTrainV2
+cd AutoTrainV3
 
 # 2. Run the automated setup script
 bash setup.sh
@@ -68,7 +68,7 @@ AutoTrainV2/
 
 ## 🚀 Usage
 
-AutoTrainV2 provides three ways to use the system:
+AutoTrainV3 provides three ways to use the system:
 
 ### 1. Web Interface (Recommended)
 
@@ -82,8 +82,6 @@ source venv/bin/activate
 python -m autotrain_sdk web serve --share
 ```
 
-Open your browser to: http://127.0.0.1:7860
-
 **Web Interface Tabs:**
 - **Dataset**: Create and manage training datasets
 - **Config**: Edit training configurations visually
@@ -94,14 +92,10 @@ Open your browser to: http://127.0.0.1:7860
 
 ### 2. Interactive Menu
 
-For guided, step-by-step usage:
 
 ```bash
 # Activate environment
 source venv/bin/activate
-
-# Start Gradio UI
-python -m autotrain_sdk web serve --share
 
 # Start CLI menu
 python -m autotrain_sdk.menu
