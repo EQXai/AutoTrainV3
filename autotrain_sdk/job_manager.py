@@ -117,6 +117,10 @@ class Job:
 
 class JobManager:
     def __init__(self):
+        # Initialize environment variables from config file at startup
+        from .utils.common import initialize_integration_env_vars
+        initialize_integration_env_vars()
+        
         self._jobs: Dict[str, Job] = {}
         self._lock = threading.Lock()
         # live streaming vars
@@ -145,17 +149,20 @@ class JobManager:
             self._save_jobs()
 
         # ---------------- Google Sheets notification ----------------
-        try:
-            from .integrations import _append_to_gsheets  # lazy import to avoid heavy dep at startup
-            from .gradio_app import _load_integrations_cfg
-            
-            cfg = _load_integrations_cfg()
-            if cfg.get("AUTO_GSHEET_ID"):
-                _append_to_gsheets(job)
-        except Exception as e:
-            # Log error for debugging but don't break queueing
-            import logging
-            logging.warning(f"Failed to update Google Sheets on job enqueue: {e}")
+        # Only try if Google Sheets is actually enabled to avoid overhead
+        if os.getenv("AUTO_GSHEET_ENABLE", "0") == "1":
+            try:
+                from .integrations import _append_to_gsheets  # lazy import to avoid heavy dep at startup
+                from .gradio_app import _load_integrations_cfg
+                
+                cfg = _load_integrations_cfg()
+                # Check that it's configured
+                if cfg.get("AUTO_GSHEET_ID"):
+                    _append_to_gsheets(job)
+            except Exception as e:
+                # Log error for debugging but don't break queueing
+                import logging
+                logging.warning(f"Failed to update Google Sheets on job enqueue: {e}")
 
         # registry entry
         try:
@@ -233,17 +240,20 @@ class JobManager:
                     self._save_jobs()
 
         # Actualizar Google Sheets con el nuevo estado cancelado
-        try:
-            from .integrations import _append_to_gsheets
-            from .gradio_app import _load_integrations_cfg
-            
-            cfg = _load_integrations_cfg()
-            if cfg.get("AUTO_GSHEET_ID"):
-                _append_to_gsheets(job)
-        except Exception as e:
-            # Log error for debugging but don't fail the cancellation
-            import logging
-            logging.warning(f"Failed to update Google Sheets on job cancel: {e}")
+        # Only try if Google Sheets is actually enabled to avoid overhead
+        if os.getenv("AUTO_GSHEET_ENABLE", "0") == "1":
+            try:
+                from .integrations import _append_to_gsheets
+                from .gradio_app import _load_integrations_cfg
+                
+                cfg = _load_integrations_cfg()
+                # Check that it's configured 
+                if cfg.get("AUTO_GSHEET_ID"):
+                    _append_to_gsheets(job)
+            except Exception as e:
+                # Log error for debugging but don't fail the cancellation
+                import logging
+                logging.warning(f"Failed to update Google Sheets on job cancel: {e}")
         
         # Clear VRAM after job cancellation to prevent memory leaks
         clear_vram()
@@ -353,17 +363,20 @@ class JobManager:
                 self._current_job_id = next_job.id
 
             # update sheet to reflect RUNNING status
-            try:
-                from .integrations import _append_to_gsheets
-                from .gradio_app import _load_integrations_cfg
-                
-                cfg = _load_integrations_cfg()
-                if cfg.get("AUTO_GSHEET_ID"):
-                    _append_to_gsheets(next_job)
-            except Exception as e:
-                # Log error for debugging but don't break job execution
-                import logging
-                logging.warning(f"Failed to update Google Sheets on job start: {e}")
+            # Only try if Google Sheets is actually enabled to avoid overhead
+            if os.getenv("AUTO_GSHEET_ENABLE", "0") == "1":
+                try:
+                    from .integrations import _append_to_gsheets
+                    from .gradio_app import _load_integrations_cfg
+                    
+                    cfg = _load_integrations_cfg()
+                    # Check that it's configured
+                    if cfg.get("AUTO_GSHEET_ID"):
+                        _append_to_gsheets(next_job)
+                except Exception as e:
+                    # Log error for debugging but don't break job execution
+                    import logging
+                    logging.warning(f"Failed to update Google Sheets on job start: {e}")
 
             # ensure run directory exists
             next_job.run_dir.mkdir(parents=True, exist_ok=True)

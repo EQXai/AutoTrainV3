@@ -13,7 +13,8 @@ Quick usage::
 """
 
 from pathlib import Path
-from typing import List
+from typing import List, Dict, Optional, Tuple, Any
+from enum import Enum
 import sys
 import os
 import shutil
@@ -53,6 +54,24 @@ console = Console()
 
 # Supported image extensions
 SUPPORTED_IMAGE_EXTS = {'jpg', 'jpeg', 'png', 'bmp', 'gif', 'tiff', 'webp'}
+
+# ------------------------------
+# Integration toggle helpers (shared with CLI)
+# ------------------------------
+
+INTEGRATION_FLAGS = {
+    "gsheet": "AUTO_GSHEET_ENABLE",
+    "hf": "AUTO_HF_ENABLE",
+    "remote": "AUTO_REMOTE_ENABLE",
+}
+
+def _integration_status(name: str) -> bool:
+    """Return True if integration *name* is enabled (env var or stored cfg)."""
+    var = INTEGRATION_FLAGS.get(name.lower())
+    if not var:
+        return False
+    cfg = _load_int_cfg()
+    return (os.getenv(var) or str(cfg.get(var, "0"))) == "1"
 
 # ---------------------------------------------------------------------------
 # Progress bar helpers
@@ -1585,7 +1604,20 @@ def _jobs_menu():
     JOBS MENU: Pure Management & Monitoring
     - No training setup here
     - Focus on job lifecycle management
+    - Auto-switches to optimized view for large queues (>100 jobs)
     """
+    
+    # Check if we should use optimized view for large queues
+    all_jobs = _JOB_MANAGER.list_jobs()
+    jobs_count = len(all_jobs)
+    
+    # Auto-switch to optimized view for large queues
+    if jobs_count > 100:
+        console.print(f"[yellow]⚡ Large queue detected ({jobs_count} jobs) - switching to optimized view[/yellow]")
+        console.print("[dim]This provides better performance and navigation for large job queues[/dim]")
+        console.print()
+        _jobs_menu_optimized()
+        return
     
     while True:
         _header_with_context("Job Management", ["AutoTrainV2", "Jobs"])
@@ -1619,6 +1651,8 @@ def _jobs_menu():
                 q.Choice("   5. Training history", "training_history"),
                 q.Separator("─────────────────"),
                 
+                # ⚡ OPTIMIZED VIEW
+                q.Choice("   6. Optimized view (for large queues)", "optimized"),
                 q.Choice("   0. Back to main menu", "back"),
             ],
         ).ask()
@@ -1635,6 +1669,8 @@ def _jobs_menu():
             _job_details_menu()
         elif action == "training_history":
             _training_history_menu()
+        elif action == "optimized":
+            _jobs_menu_optimized()
 
 # ---------------------------------------------------------------------------
 # OPTION A: Compact List View Implementation
@@ -1727,15 +1763,37 @@ def _show_job_summary():
         console.print()
 
 def _view_queue_compact():
-    """View job queue using compact list format."""
+    """View job queue using compact list format with smart optimization detection."""
     _header_with_context("Job Queue", ["AutoTrainV2", "Jobs", "Queue"])
+    
+    # Check if optimized view should be used
+    all_jobs = _JOB_MANAGER.list_jobs()
+    
+    if _should_use_optimized_view(all_jobs):
+        _show_queue_performance_warning(len(all_jobs))
+        
+        # Offer to switch to optimized view
+        use_optimized = q.select(
+            "Large queue detected. Choose view:",
+            choices=[
+                q.Choice("Use optimized view (recommended)", True),
+                q.Choice("Continue with legacy view", False),
+            ]
+        ).ask()
+        
+        if use_optimized:
+            _jobs_menu_optimized()
+            return
     
     table = _create_compact_job_table()
     console.print(table)
     console.print()
     
-    # Quick actions
-    console.print("[dim]Quick actions: [r]efresh, [d]etails, [c]ancel, [q]uit[/dim]")
+    # Enhanced quick actions based on queue size
+    if len(all_jobs) > 50:
+        console.print("[dim]Quick actions: [r]efresh, [d]etails, [c]ancel, [o]ptimized view, [q]uit[/dim]")
+    else:
+        console.print("[dim]Quick actions: [r]efresh, [d]etails, [c]ancel, [q]uit[/dim]")
     
     while True:
         action = q.text("Action (or Enter to back):").ask()
@@ -1744,16 +1802,31 @@ def _view_queue_compact():
         elif action.lower() == 'r':
             console.clear()
             _header_with_context("Job Queue", ["AutoTrainV2", "Jobs", "Queue"])
+            
+            # Re-check for optimization on refresh
+            current_jobs = _JOB_MANAGER.list_jobs()
+            if _should_use_optimized_view(current_jobs) and len(current_jobs) != len(all_jobs):
+                console.print(f"[yellow]Queue size changed to {len(current_jobs)} jobs - consider optimized view[/yellow]")
+                console.print()
+            
             table = _create_compact_job_table()
             console.print(table)
             console.print()
-            console.print("[dim]Quick actions: [r]efresh, [d]etails, [c]ancel, [q]uit[/dim]")
+            
+            if len(current_jobs) > 50:
+                console.print("[dim]Quick actions: [r]efresh, [d]etails, [c]ancel, [o]ptimized view, [q]uit[/dim]")
+            else:
+                console.print("[dim]Quick actions: [r]efresh, [d]etails, [c]ancel, [q]uit[/dim]")
+                
         elif action.lower() == 'd':
             _job_details_menu()
         elif action.lower() == 'c':
             _cancel_remove_jobs()
+        elif action.lower() == 'o' and len(all_jobs) > 50:
+            _jobs_menu_optimized()
+            break
         else:
-            console.print("[yellow]Unknown action. Use r/d/c/q[/yellow]")
+            console.print("[yellow]Unknown action. Use r/d/c/q" + ("/o" if len(all_jobs) > 50 else "") + "[/yellow]")
 
 # ---------------------------------------------------------------------------
 # TRAINING MENU FUNCTIONS (Setup & Configuration)
@@ -2542,6 +2615,10 @@ def _import_external_dataset():
 
 def run():  # noqa: D401 (simple verb)
     """Executes main menu with improved navigation and grouping."""
+    # Initialize environment variables from config file at startup
+    from .utils.common import initialize_integration_env_vars
+    initialize_integration_env_vars()
+    
     import threading
     import time
     from datetime import datetime, timedelta
@@ -2676,37 +2753,34 @@ def _integrations_menu():
     while True:
         _header_with_context("Integrations", ["AutoTrainV2", "Integrations"])
         
-        # Show configured integrations
-        cfg = _load_int_cfg()
-        integrations_status = []
-        
-        checks = [
-            ("Google Sheets", "AUTO_GSHEET_ID"),
-            ("Hugging Face", "AUTO_HF_TOKEN"),
-            ("Remote Output", "AUTO_REMOTE_BASE")
-        ]
-        
-        for name, key in checks:
-            status = "✓" if cfg.get(key) else "✗"
-            integrations_status.append(f"{status} {name}")
-        
-        if integrations_status:
-            console.print(f"[dim]{' • '.join(integrations_status)}[/dim]")
+        # Show current status table
+        from rich.table import Table as _Tbl
+        tbl = _Tbl(title="Integrations status", box=None)
+        tbl.add_column("Name", style="cyan")
+        tbl.add_column("Enabled", style="green")
+        for name in sorted(INTEGRATION_FLAGS):
+            enabled = "[green]YES[/green]" if _integration_status(name) else "[red]NO[/red]"
+            tbl.add_row(name, enabled)
+        console.print(tbl)
         console.print()
-        
+
         action = q.select(
-            "Choose integration to configure:",
+            "Choose integration option:",
             choices=[
-                # 🔗 EXTERNAL SERVICES
+                # 🔧 TOGGLE
+                q.Separator("╔════════════════════╗"),
+                q.Separator("║  🔧 TOGGLE STATUS  ║"),
+                q.Separator("╚════════════════════╝"),
+                q.Choice(" » 0. Enable/Disable integration", "toggle"),
+                # 🔗 CONFIGURE
                 q.Separator("╔═══════════════════════╗"),
-                q.Separator("║  🔗 EXTERNAL SERVICES ║"),
+                q.Separator("║  🔗 CONFIGURE DETAILS ║"),
                 q.Separator("╚═══════════════════════╝"),
-                q.Choice(" » 1. Google Sheets integration", "gsheets"),
+                q.Choice("   1. Google Sheets integration", "gsheets"),
                 q.Choice("   2. Hugging Face Hub", "huggingface"),
                 q.Choice("   3. Remote output storage", "remote"),
                 q.Separator("─────────────────────────"),
-                
-                q.Choice("   0. Back to main menu", "back"),
+                q.Choice("   9. Back to main menu", "back"),
             ],
         ).ask()
 
@@ -2714,6 +2788,22 @@ def _integrations_menu():
             return
 
         cfg = _load_int_cfg()
+
+        # ---------- Toggle enable/disable ----------
+        if action == "toggle":
+            # Select integration to toggle
+            name_sel = q.select("Select integration:", choices=sorted(INTEGRATION_FLAGS.keys()) + ["Cancel"]).ask()
+            if not name_sel or name_sel == "Cancel":
+                continue
+            var = INTEGRATION_FLAGS[name_sel]
+            current = cfg.get(var, os.getenv(var, "0"))
+            new_val = "0" if str(current) == "1" else "1"
+            cfg[var] = new_val
+            _save_int_cfg(cfg)
+            state_str = "enabled" if new_val == "1" else "disabled"
+            console.print(f"[green]Integration '{name_sel}' {state_str}.[/green]")
+            _pause()
+            continue
 
         if action == "gsheets":
             current_cred = cfg.get("AUTO_GSHEET_CRED", "") or ""
@@ -2755,6 +2845,7 @@ def _integrations_menu():
                 "AUTO_GSHEET_ID": sheet_id.strip(),
                 "AUTO_GSHEET_TAB": (tab_name.strip() if tab_name else None),
                 "AUTO_GSHEET_KEYS": ",".join(final_keys),
+                "AUTO_GSHEET_ENABLE": cfg.get("AUTO_GSHEET_ENABLE", "1"),
             })
 
         elif action == "huggingface":
@@ -2777,6 +2868,7 @@ def _integrations_menu():
             cfg.update({
                 "AUTO_REMOTE_BASE": base or None,
                 "AUTO_REMOTE_DIRECT": "1" if direct else "0",
+                "AUTO_REMOTE_ENABLE": cfg.get("AUTO_REMOTE_ENABLE", "1"),
             })
 
         _save_int_cfg(cfg)
@@ -4224,6 +4316,679 @@ def _create_upcoming_jobs_table(limit: int = 6) -> Table | None:
         table.add_row("…", f"+{len(pending_jobs)-limit} more", "", "")
 
     return table
+
+# ---------------------------------------------------------------------------
+# Smart Queue Management Detection
+# ---------------------------------------------------------------------------
+
+def _should_use_optimized_view(jobs: List[Job]) -> bool:
+    """Determine if optimized view should be used based on queue size and composition."""
+    total_jobs = len(jobs)
+    
+    # Use optimized view for large queues
+    if total_jobs > 100:
+        return True
+    
+    # Also use optimized view if there are many completed jobs (performance impact)
+    completed_jobs = len([j for j in jobs if j.status in {JobStatus.DONE, JobStatus.FAILED, JobStatus.CANCELED}])
+    if completed_jobs > 50:
+        return True
+    
+    return False
+
+def _show_queue_performance_warning(jobs_count: int):
+    """Show performance warning for large queues with optimization suggestions."""
+    console.print(f"[yellow]⚠️ Large queue detected ({jobs_count} jobs)[/yellow]")
+    console.print()
+    
+    if jobs_count > 1000:
+        console.print("[red]🚨 Very large queue (>1000 jobs) - performance may be significantly impacted[/red]")
+        console.print("[dim]Recommendations:[/dim]")
+        console.print("[dim]  • Use optimized view for better performance[/dim]")
+        console.print("[dim]  • Clean up old completed jobs periodically[/dim]")
+        console.print("[dim]  • Consider archiving historical jobs[/dim]")
+    elif jobs_count > 500:
+        console.print("[yellow]⚡ Large queue (>500 jobs) - using optimized view recommended[/yellow]")
+        console.print("[dim]  • Optimized view provides better navigation and performance[/dim]")
+    else:
+        console.print("[cyan]ℹ️ Moderate queue size - optimized view available for better navigation[/cyan]")
+    
+    console.print()
+
+# ---------------------------------------------------------------------------
+# Enhanced Job Management for Large Queues (1000+ jobs optimization)
+# ---------------------------------------------------------------------------
+
+class JobFilter(str, Enum):
+    """Job filter options for large queue management."""
+    ALL = "all"
+    ACTIVE = "active"  # running + pending
+    RUNNING = "running"
+    PENDING = "pending"
+    COMPLETED = "completed"  # done + failed + canceled
+    DONE = "done"
+    FAILED = "failed"
+    CANCELED = "canceled"
+    RECENT = "recent"  # last 24 hours
+
+def _get_filtered_jobs(jobs: List[Job], filter_type: JobFilter = JobFilter.ALL, 
+                      search_term: str = "", limit: int = 0) -> List[Job]:
+    """Get filtered and optionally limited list of jobs for performance."""
+    
+    # Apply status filter first (most selective)
+    if filter_type == JobFilter.ACTIVE:
+        filtered = [j for j in jobs if j.status in {JobStatus.RUNNING, JobStatus.PENDING}]
+    elif filter_type == JobFilter.RUNNING:
+        filtered = [j for j in jobs if j.status == JobStatus.RUNNING]
+    elif filter_type == JobFilter.PENDING:
+        filtered = [j for j in jobs if j.status == JobStatus.PENDING]
+    elif filter_type == JobFilter.COMPLETED:
+        filtered = [j for j in jobs if j.status in {JobStatus.DONE, JobStatus.FAILED, JobStatus.CANCELED}]
+    elif filter_type == JobFilter.DONE:
+        filtered = [j for j in jobs if j.status == JobStatus.DONE]
+    elif filter_type == JobFilter.FAILED:
+        filtered = [j for j in jobs if j.status == JobStatus.FAILED]
+    elif filter_type == JobFilter.CANCELED:
+        filtered = [j for j in jobs if j.status == JobStatus.CANCELED]
+    elif filter_type == JobFilter.RECENT:
+        # Recent jobs (simple heuristic: jobs with recent IDs)
+        # Sort by ID and take latest (since IDs contain timestamps)
+        sorted_jobs = sorted(jobs, key=lambda x: x.id, reverse=True)
+        filtered = sorted_jobs[:100]  # Last 100 as "recent"
+    else:  # ALL
+        filtered = jobs
+    
+    # Apply search filter if provided
+    if search_term:
+        search_lower = search_term.lower()
+        filtered = [j for j in filtered if (
+            search_lower in j.id.lower() or
+            search_lower in j.dataset.lower() or
+            search_lower in j.profile.lower()
+        )]
+    
+    # Apply limit if specified
+    if limit > 0:
+        filtered = filtered[:limit]
+    
+    return filtered
+
+def _get_job_stats_fast(jobs: List[Job]) -> Dict[str, int]:
+    """Get job statistics efficiently without multiple iterations."""
+    stats = {
+        "total": len(jobs),
+        "running": 0,
+        "pending": 0,
+        "done": 0,
+        "failed": 0,
+        "canceled": 0
+    }
+    
+    for job in jobs:
+        if job.status == JobStatus.RUNNING:
+            stats["running"] += 1
+        elif job.status == JobStatus.PENDING:
+            stats["pending"] += 1
+        elif job.status == JobStatus.DONE:
+            stats["done"] += 1
+        elif job.status == JobStatus.FAILED:
+            stats["failed"] += 1
+        elif job.status == JobStatus.CANCELED:
+            stats["canceled"] += 1
+    
+    stats["active"] = stats["running"] + stats["pending"]
+    stats["completed"] = stats["done"] + stats["failed"] + stats["canceled"]
+    
+    return stats
+
+def _create_optimized_job_table(jobs: List[Job], page_size: int = 15, page: int = 1, 
+                                filter_type: JobFilter = JobFilter.ALL, 
+                                search_term: str = "") -> Tuple[Table, Dict[str, Any]]:
+    """Create an optimized job table with pagination and filtering (15 jobs per page)."""
+    
+    # Get filtered jobs
+    filtered_jobs = _get_filtered_jobs(jobs, filter_type, search_term)
+    
+    # Calculate pagination
+    total_filtered = len(filtered_jobs)
+    total_pages = (total_filtered + page_size - 1) // page_size if total_filtered > 0 else 1
+    start_idx = (page - 1) * page_size
+    end_idx = min(start_idx + page_size, total_filtered)
+    page_jobs = filtered_jobs[start_idx:end_idx]
+    
+    # Create table with optimized rendering
+    table = Table(show_header=True, header_style="bold magenta", box=None)
+    table.add_column("Job", style="cyan", width=10)
+    table.add_column("Dataset", style="blue", width=15)
+    table.add_column("Status", style="bold", width=12)
+    table.add_column("Progress", style="green", width=15)
+    table.add_column("ETA", style="yellow", width=10)
+    
+    if not page_jobs:
+        table.add_row("—", "—", "—", "No jobs found", "—")
+    else:
+        for job in page_jobs:
+            # Format status with emoji (cached for performance)
+            status_text = _format_job_status_menu(job.status)
+            
+            # Format progress (optimized)
+            if job.status == JobStatus.RUNNING and job.progress_str:
+                progress_text = f"{job.percent:.0f}%" if job.percent else job.progress_str
+            elif job.status == JobStatus.PENDING:
+                # Simplified position calculation (avoid expensive iteration)
+                progress_text = "Queued"
+            elif job.status == JobStatus.DONE:
+                progress_text = "100%"
+            elif job.status == JobStatus.FAILED:
+                progress_text = "Failed"
+            elif job.status == JobStatus.CANCELED:
+                progress_text = "Canceled"
+            else:
+                progress_text = "—"
+            
+            # Format ETA (simplified)
+            if job.status == JobStatus.RUNNING and job.eta:
+                eta_text = job.eta
+            elif job.status == JobStatus.DONE:
+                eta_text = "Complete"
+            else:
+                eta_text = "—"
+            
+            table.add_row(
+                job.id[:10] + "..." if len(job.id) > 10 else job.id,
+                job.dataset[:15] + "..." if len(job.dataset) > 15 else job.dataset,
+                status_text,
+                progress_text,
+                eta_text
+            )
+    
+    # Create metadata for pagination info
+    metadata = {
+        "total_jobs": len(jobs),
+        "filtered_jobs": total_filtered,
+        "current_page": page,
+        "total_pages": total_pages,
+        "page_size": page_size,
+        "showing_from": start_idx + 1 if page_jobs else 0,
+        "showing_to": end_idx,
+        "filter_type": filter_type,
+        "search_term": search_term
+    }
+    
+    return table, metadata
+
+def _show_pagination_info(metadata: Dict[str, Any]) -> None:
+    """Show pagination and filtering information."""
+    total = metadata["total_jobs"]
+    filtered = metadata["filtered_jobs"]
+    page = metadata["current_page"]
+    total_pages = metadata["total_pages"]
+    showing_from = metadata["showing_from"]
+    showing_to = metadata["showing_to"]
+    filter_type = metadata["filter_type"]
+    search_term = metadata["search_term"]
+    
+    # Filter info
+    filter_info = f"Filter: {filter_type.value}"
+    if search_term:
+        filter_info += f" | Search: '{search_term}'"
+    
+    # Pagination info
+    if filtered > 0:
+        page_info = f"Showing {showing_from}-{showing_to} of {filtered}"
+        if filtered != total:
+            page_info += f" (filtered from {total} total)"
+        page_info += f" | Page {page}/{total_pages}"
+    else:
+        page_info = f"No jobs found (total: {total})"
+    
+    console.print(f"[dim]{filter_info}[/dim]")
+    console.print(f"[dim]{page_info}[/dim]")
+    console.print()
+
+def _jobs_menu_optimized():
+    """Optimized jobs menu for handling large queues (1000+ jobs)."""
+    
+    # Configuration
+    page_size = 15  # Jobs per page
+    current_page = 1
+    current_filter = JobFilter.ACTIVE  # Start with active jobs (most relevant)
+    search_term = ""
+    
+    while True:
+        _header_with_context("Job Management (Optimized)", ["AutoTrainV2", "Jobs"])
+        
+        # Get all jobs once (but don't process them all)
+        all_jobs = _JOB_MANAGER.list_jobs()
+        
+        # Get fast statistics
+        stats = _get_job_stats_fast(all_jobs)
+        
+        # Show quick stats
+        if stats["total"] > 0:
+            console.print(f"[bold]📊 Queue Overview:[/bold] {stats['total']} total | "
+                         f"🔄 {stats['running']} running | ⏸️ {stats['pending']} pending | "
+                         f"✅ {stats['done']} completed | ❌ {stats['failed']} failed")
+            
+            if stats["total"] > 100:
+                console.print(f"[yellow]⚡ Large queue detected ({stats['total']} jobs) - using optimized view[/yellow]")
+            console.print()
+        
+        # Create optimized table
+        table, metadata = _create_optimized_job_table(
+            all_jobs, page_size, current_page, current_filter, search_term
+        )
+        
+        # Show pagination info
+        _show_pagination_info(metadata)
+        
+        # Show table
+        console.print(table)
+        console.print()
+        
+        # Navigation options
+        nav_choices = []
+        
+        # Filter options
+        nav_choices.extend([
+            q.Separator("╔══════════════════╗"),
+            q.Separator("║  📋 FILTERING    ║"),
+            q.Separator("╚══════════════════╝"),
+            q.Choice("f. Change filter", "filter"),
+            q.Choice("s. Search jobs", "search"),
+            q.Choice("c. Clear search", "clear_search"),
+        ])
+        
+        # Pagination options
+        if metadata["total_pages"] > 1:
+            nav_choices.extend([
+                q.Separator("╔═══════════════════╗"),
+                q.Separator("║  📄 NAVIGATION    ║"),
+                q.Separator("╚═══════════════════╝"),
+            ])
+            
+            if current_page > 1:
+                nav_choices.append(q.Choice("p. Previous page", "prev"))
+            if current_page < metadata["total_pages"]:
+                nav_choices.append(q.Choice("n. Next page", "next"))
+            
+            nav_choices.extend([
+                q.Choice("g. Go to page", "goto"),
+                q.Choice("↑. First page", "first"),
+                q.Choice("↓. Last page", "last"),
+            ])
+        
+        # Management options
+        nav_choices.extend([
+            q.Separator("╔═══════════════════╗"),
+            q.Separator("║  🔧 MANAGEMENT    ║"),
+            q.Separator("╚═══════════════════╝"),
+            q.Choice("1. Job details", "details"),
+            q.Choice("2. Cancel/Remove jobs", "cancel"),
+            q.Choice("3. Live monitor", "monitor"),
+            q.Choice("4. Bulk operations", "bulk"),
+        ])
+        
+        # System options
+        nav_choices.extend([
+            q.Separator("╔═══════════════════╗"),
+            q.Separator("║  🔄 SYSTEM        ║"),
+            q.Separator("╚═══════════════════╝"),
+            q.Choice("r. Refresh", "refresh"),
+            q.Choice("t. Toggle view mode", "toggle"),
+            q.Choice("0. Back to main menu", "back"),
+        ])
+        
+        action = q.select("Choose action:", choices=nav_choices).ask()
+        
+        if action in {None, "back"}:
+            return
+        elif action == "filter":
+            new_filter = q.select(
+                "Select filter:",
+                choices=[
+                    q.Choice("Active (Running + Pending)", JobFilter.ACTIVE),
+                    q.Choice("All jobs", JobFilter.ALL),
+                    q.Choice("Running only", JobFilter.RUNNING),
+                    q.Choice("Pending only", JobFilter.PENDING),
+                    q.Choice("Completed (Done + Failed + Canceled)", JobFilter.COMPLETED),
+                    q.Choice("Done only", JobFilter.DONE),
+                    q.Choice("Failed only", JobFilter.FAILED),
+                    q.Choice("Canceled only", JobFilter.CANCELED),
+                    q.Choice("Recent (last 100)", JobFilter.RECENT),
+                ],
+                default=current_filter
+            ).ask()
+            if new_filter:
+                current_filter = new_filter
+                current_page = 1  # Reset to first page
+        elif action == "search":
+            new_search = q.text("Search term (ID, dataset, profile):").ask()
+            if new_search is not None:
+                search_term = new_search.strip()
+                current_page = 1  # Reset to first page
+        elif action == "clear_search":
+            search_term = ""
+            current_page = 1
+        elif action == "prev":
+            current_page = max(1, current_page - 1)
+        elif action == "next":
+            current_page = min(metadata["total_pages"], current_page + 1)
+        elif action == "goto":
+            try:
+                page_num = int(q.text(f"Go to page (1-{metadata['total_pages']}):").ask() or "0")
+                if 1 <= page_num <= metadata["total_pages"]:
+                    current_page = page_num
+                else:
+                    console.print(f"[red]Invalid page number. Use 1-{metadata['total_pages']}[/red]")
+                    _pause()
+            except ValueError:
+                console.print("[red]Invalid page number[/red]")
+                _pause()
+        elif action == "first":
+            current_page = 1
+        elif action == "last":
+            current_page = metadata["total_pages"]
+        elif action == "refresh":
+            continue  # Just refresh the view
+        elif action == "details":
+            _job_details_optimized(all_jobs, current_filter, search_term)
+        elif action == "cancel":
+            _cancel_remove_jobs_optimized(all_jobs, current_filter, search_term)
+        elif action == "monitor":
+            _training_monitor_menu()
+        elif action == "bulk":
+            _bulk_operations_menu(all_jobs, current_filter, search_term)
+        elif action == "toggle":
+            # Toggle between optimized and legacy view
+            console.print("[cyan]Switching to legacy view...[/cyan]")
+            time.sleep(1)
+            _view_queue_compact()
+            break
+
+def _job_details_optimized(all_jobs: List[Job], filter_type: JobFilter, search_term: str):
+    """Show job details with optimized selection for large queues."""
+    filtered_jobs = _get_filtered_jobs(all_jobs, filter_type, search_term, limit=30)  # Limit for UI
+    
+    if not filtered_jobs:
+        console.print("[yellow]No jobs found with current filter[/yellow]")
+        _pause()
+        return
+    
+    # If too many jobs, use search
+    if len(filtered_jobs) > 15:
+        job_id = q.text("Enter Job ID (or partial ID):").ask()
+        if not job_id:
+            return
+        
+        matching_jobs = [j for j in filtered_jobs if job_id.lower() in j.id.lower()]
+        if not matching_jobs:
+            console.print(f"[yellow]No jobs found matching '{job_id}'[/yellow]")
+            _pause()
+            return
+        elif len(matching_jobs) == 1:
+            selected_job = matching_jobs[0]
+        else:
+            # Multiple matches, let user select
+            choices = [f"{j.id} ({j.dataset}, {j.status.value})" for j in matching_jobs[:15]]
+            selected = q.select("Multiple matches found:", choices=choices + ["Cancel"]).ask()
+            if not selected or selected == "Cancel":
+                return
+            job_id = selected.split(" ")[0]
+            selected_job = next((j for j in matching_jobs if j.id == job_id), None)
+    else:
+        # Small list, show selection
+        choices = [f"{j.id} ({j.dataset}, {j.status.value})" for j in filtered_jobs]
+        selected = q.select("Select job for details:", choices=choices + ["Cancel"]).ask()
+        if not selected or selected == "Cancel":
+            return
+        job_id = selected.split(" ")[0]
+        selected_job = next((j for j in filtered_jobs if j.id == job_id), None)
+    
+    if selected_job:
+        _show_job_details_menu(selected_job)
+
+def _cancel_remove_jobs_optimized(all_jobs: List[Job], filter_type: JobFilter, search_term: str):
+    """Optimized cancel/remove interface for large queues."""
+    _header_with_context("Cancel/Remove Jobs (Optimized)", ["AutoTrainV2", "Jobs", "Cancel"])
+    
+    # Show quick stats
+    stats = _get_job_stats_fast(all_jobs)
+    console.print(f"[dim]📊 {stats['running']} running | {stats['pending']} pending | {stats['completed']} completed[/dim]")
+    console.print()
+    
+    action = q.select(
+        "Choose bulk operation:",
+        choices=[
+            q.Choice("Cancel specific job (by ID)", "cancel_specific"),
+            q.Choice("Remove specific job (by ID)", "remove_specific"),
+            q.Choice("Cancel all running jobs", "cancel_all_running"),
+            q.Choice("Remove all completed jobs", "remove_all_completed"),
+            q.Choice("Emergency stop all active jobs", "emergency_stop"),
+            q.Choice("Back", "back")
+        ]
+    ).ask()
+    
+    if action in {None, "back"}:
+        return
+    elif action == "cancel_specific":
+        job_id = q.text("Enter Job ID to cancel:").ask()
+        if job_id and q.confirm(f"Cancel job {job_id}?", default=False).ask():
+            _JOB_MANAGER.cancel(job_id)
+            console.print(f"[green]✅ Job {job_id} canceled[/green]")
+            _pause()
+    elif action == "remove_specific":
+        job_id = q.text("Enter Job ID to remove:").ask()
+        if job_id and q.confirm(f"Remove job {job_id}?", default=False).ask():
+            if _JOB_MANAGER.remove_job(job_id):
+                console.print(f"[green]✅ Job {job_id} removed[/green]")
+            else:
+                console.print(f"[yellow]⚠️ Could not remove job {job_id}[/yellow]")
+            _pause()
+    elif action == "cancel_all_running":
+        running_jobs = [j for j in all_jobs if j.status == JobStatus.RUNNING]
+        if not running_jobs:
+            console.print("[yellow]No running jobs to cancel[/yellow]")
+            _pause()
+            return
+        
+        console.print(f"[red]⚠️ This will cancel {len(running_jobs)} running job(s)[/red]")
+        if q.confirm("Cancel all running jobs?", default=False).ask():
+            console.print(f"[cyan]Canceling {len(running_jobs)} running jobs...[/cyan]")
+            
+            # Use progress bar for large operations (though running jobs are usually few)
+            if len(running_jobs) > 5:
+                with _create_progress_bar("Canceling Running Jobs") as progress:
+                    task = progress.add_task("[red]Canceling running jobs...", total=len(running_jobs))
+                    for i, job in enumerate(running_jobs, 1):
+                        _JOB_MANAGER.cancel(job.id)
+                        progress.update(task, description=f"[red]Canceled {i}/{len(running_jobs)} running jobs")
+                        progress.advance(task)
+            else:
+                # For small operations, show individual progress
+                for i, job in enumerate(running_jobs, 1):
+                    console.print(f"[dim]Canceling running job {i}/{len(running_jobs)}: {job.id}[/dim]")
+                    _JOB_MANAGER.cancel(job.id)
+            
+            console.print(f"[green]✅ Canceled {len(running_jobs)} running jobs[/green]")
+            _pause()
+    elif action == "remove_all_completed":
+        completed_jobs = [j for j in all_jobs if j.status in {JobStatus.DONE, JobStatus.FAILED, JobStatus.CANCELED}]
+        if not completed_jobs:
+            console.print("[yellow]No completed jobs to remove[/yellow]")
+            _pause()
+            return
+        
+        console.print(f"[yellow]⚠️ This will remove {len(completed_jobs)} completed job(s)[/yellow]")
+        if q.confirm("Remove all completed jobs?", default=False).ask():
+            console.print(f"[cyan]Removing {len(completed_jobs)} completed jobs...[/cyan]")
+            
+            removed = 0
+            # Use progress bar for large operations
+            if len(completed_jobs) > 10:
+                with _create_progress_bar("Removing Jobs") as progress:
+                    task = progress.add_task("[yellow]Removing completed jobs...", total=len(completed_jobs))
+                    for i, job in enumerate(completed_jobs, 1):
+                        if _JOB_MANAGER.remove_job(job.id):
+                            removed += 1
+                        progress.update(task, description=f"[yellow]Removed {removed}/{len(completed_jobs)} jobs")
+                        progress.advance(task)
+            else:
+                # For small operations, show individual progress
+                for i, job in enumerate(completed_jobs, 1):
+                    console.print(f"[dim]Removing job {i}/{len(completed_jobs)}: {job.id}[/dim]")
+                    if _JOB_MANAGER.remove_job(job.id):
+                        removed += 1
+            
+            console.print(f"[green]✅ Removed {removed} completed jobs[/green]")
+            _pause()
+    elif action == "emergency_stop":
+        active_jobs = [j for j in all_jobs if j.status in {JobStatus.RUNNING, JobStatus.PENDING}]
+        if not active_jobs:
+            console.print("[yellow]No active jobs to stop[/yellow]")
+            _pause()
+            return
+        
+        console.print(f"[red]🚨 EMERGENCY STOP: This will cancel {len(active_jobs)} active job(s)[/red]")
+        if q.confirm("Emergency stop all active jobs?", default=False).ask():
+            console.print(f"[cyan]Canceling {len(active_jobs)} jobs...[/cyan]")
+            
+            # Use progress bar for large operations
+            if len(active_jobs) > 10:
+                with _create_progress_bar("Emergency Stop") as progress:
+                    task = progress.add_task("[red]Canceling jobs...", total=len(active_jobs))
+                    for i, job in enumerate(active_jobs, 1):
+                        _JOB_MANAGER.cancel(job.id)
+                        progress.update(task, description=f"[red]Canceled {i}/{len(active_jobs)} jobs")
+                        progress.advance(task)
+            else:
+                # For small operations, show individual progress
+                for i, job in enumerate(active_jobs, 1):
+                    console.print(f"[dim]Canceling job {i}/{len(active_jobs)}: {job.id}[/dim]")
+                    _JOB_MANAGER.cancel(job.id)
+            
+            console.print(f"[green]✅ Emergency stop completed for {len(active_jobs)} jobs[/green]")
+            console.print("[dim]Note: Integration notifications are optimized to avoid spam when disabled[/dim]")
+            _pause()
+
+def _bulk_operations_menu(all_jobs: List[Job], filter_type: JobFilter, search_term: str):
+    """Bulk operations menu for managing large job queues."""
+    _header_with_context("Bulk Operations", ["AutoTrainV2", "Jobs", "Bulk"])
+    
+    stats = _get_job_stats_fast(all_jobs)
+    console.print(f"[bold]📊 Queue Statistics:[/bold]")
+    console.print(f"  Total: {stats['total']} | Active: {stats['active']} | Completed: {stats['completed']}")
+    
+    # Show integration status to inform user about potential notifications
+    gsheets_enabled = os.getenv("AUTO_GSHEET_ENABLE", "0") == "1"
+    console.print(f"[dim]🔧 Google Sheets notifications: {'enabled' if gsheets_enabled else 'disabled (no warnings)'}[/dim]")
+    console.print()
+    
+    action = q.select(
+        "Choose bulk operation:",
+        choices=[
+            q.Choice("Clean old completed jobs (keep last 50)", "clean_old"),
+            q.Choice("Archive completed jobs to file", "archive"),
+            q.Choice("Export job list to CSV", "export"),
+            q.Choice("Show detailed statistics", "detailed_stats"),
+            q.Choice("Optimize queue performance", "optimize"),
+            q.Choice("Back", "back")
+        ]
+    ).ask()
+    
+    if action in {None, "back"}:
+        return
+    elif action == "clean_old":
+        # Keep only last 50 completed jobs
+        completed_jobs = [j for j in all_jobs if j.status in {JobStatus.DONE, JobStatus.FAILED, JobStatus.CANCELED}]
+        if len(completed_jobs) <= 50:
+            console.print("[green]Queue is already optimized (≤50 completed jobs)[/green]")
+            _pause()
+            return
+        
+        # Sort by job ID (which contains timestamp) and keep newest 50
+        sorted_completed = sorted(completed_jobs, key=lambda x: x.id, reverse=True)
+        jobs_to_remove = sorted_completed[50:]  # Remove oldest
+        
+        console.print(f"[yellow]This will remove {len(jobs_to_remove)} old completed jobs (keeping newest 50)[/yellow]")
+        if q.confirm("Continue with cleanup?", default=True).ask():
+            removed = 0
+            for job in jobs_to_remove:
+                if _JOB_MANAGER.remove_job(job.id):
+                    removed += 1
+            console.print(f"[green]✅ Cleaned up {removed} old jobs[/green]")
+            _pause()
+    elif action == "detailed_stats":
+        _show_detailed_job_statistics(all_jobs)
+    elif action == "optimize":
+        console.print("[cyan]🔧 Optimizing job queue performance...[/cyan]")
+        
+        # Clear completed jobs older than certain threshold
+        completed_count = stats['completed']
+        if completed_count > 100:
+            console.print(f"[yellow]Found {completed_count} completed jobs (recommended: keep <100)[/yellow]")
+            if q.confirm("Remove completed jobs to improve performance?", default=True).ask():
+                removed = _JOB_MANAGER.clear_completed_jobs()
+                console.print(f"[green]✅ Removed {removed} completed jobs[/green]")
+        
+        console.print("[green]✅ Queue optimization completed[/green]")
+        _pause()
+    
+    # Add other bulk operations as needed...
+
+def _show_detailed_job_statistics(all_jobs: List[Job]):
+    """Show detailed statistics about the job queue."""
+    _header_with_context("Detailed Job Statistics", ["AutoTrainV2", "Jobs", "Statistics"])
+    
+    stats = _get_job_stats_fast(all_jobs)
+    
+    # Basic stats table
+    stats_table = Table("Metric", "Count", "Percentage", title="📊 Job Queue Statistics")
+    total = stats["total"]
+    
+    for status, count in [
+        ("Total Jobs", stats["total"]),
+        ("Running", stats["running"]),
+        ("Pending", stats["pending"]),
+        ("Completed", stats["done"]),
+        ("Failed", stats["failed"]),
+        ("Canceled", stats["canceled"]),
+    ]:
+        percentage = f"{(count/total*100):.1f}%" if total > 0 else "0%"
+        stats_table.add_row(status, str(count), percentage)
+    
+    console.print(stats_table)
+    console.print()
+    
+    # Dataset statistics
+    dataset_counts = {}
+    profile_counts = {}
+    
+    for job in all_jobs:
+        dataset_counts[job.dataset] = dataset_counts.get(job.dataset, 0) + 1
+        profile_counts[job.profile] = profile_counts.get(job.profile, 0) + 1
+    
+    # Top datasets
+    top_datasets = sorted(dataset_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+    if top_datasets:
+        dataset_table = Table("Dataset", "Jobs", title="📂 Top Datasets")
+        for dataset, count in top_datasets:
+            dataset_table.add_row(dataset, str(count))
+        console.print(dataset_table)
+        console.print()
+    
+    # Profile distribution
+    profile_table = Table("Profile", "Jobs", title="⚙️ Profile Distribution")
+    for profile, count in sorted(profile_counts.items(), key=lambda x: x[1], reverse=True):
+        profile_table.add_row(profile, str(count))
+    console.print(profile_table)
+    console.print()
+    
+    _pause()
+
+# ---------------------------------------------------------------------------
+# Integration with existing menu system
+# ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
     try:

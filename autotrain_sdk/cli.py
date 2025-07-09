@@ -51,6 +51,7 @@ from rich.columns import Columns
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.layout import Layout
 from rich.text import Text
+import os  # NEW: for environment variable checks
 
 from .dataset import (
     create_input_folders,
@@ -280,18 +281,14 @@ app.add_typer(registry_app, name="registry")
 sweep_app = typer.Typer(help="Generate grid-search presets for a dataset")
 app.add_typer(sweep_app, name="sweep")
 
+
 @sweep_app.command("create", help="Create presets expanding a parameter grid")
 def sweep_create(
     dataset: str = typer.Option(..., help="Dataset folder name, e.g. 'b09g13'"),
     profile: str = typer.Option(..., help="Profile: Flux | FluxLORA | Nude"),
     param: list[str] = typer.Option(..., help="key=v1,v2 (repeat flag for multiple keys)"),
 ):
-    """Generate one TOML file per combination of the provided parameter grid.
-
-    Example:
-        autotrain sweep create --dataset b09g13 --profile Flux \
-            --param learning_rate=4e-6,1e-5 --param max_train_epochs=1,3
-    """
+    """Generate one TOML file per combination of the provided parameter grid."""
 
     try:
         grid = parse_grid(param)
@@ -310,23 +307,20 @@ def sweep_create(
 
     typer.echo("[green]Done[/green]")
 
-# --------------------------------------------------------------
-# Interactive wizard (no flags needed)
-# --------------------------------------------------------------
 
 @sweep_app.command("wizard", help="Interactive wizard to create grid-search presets")
 def sweep_wizard():
     """Prompt-based flow so the user can create sweeps without remembering flags."""
 
-    import typer
+    import typer as _tp
 
-    dataset = typer.prompt("Dataset name (folder inside input/)").strip()
-    profile = typer.prompt("Profile [Flux / FluxLORA / Nude]", default="Flux").strip()
+    dataset = _tp.prompt("Dataset name (folder inside input/)").strip()
+    profile = _tp.prompt("Profile [Flux / FluxLORA / Nude]", default="Flux").strip()
 
-    typer.echo("Enter parameter grid. For each line use: key=val1,val2 OR blank to finish.")
+    _tp.echo("Enter parameter grid. For each line use: key=val1,val2 OR blank to finish.")
     grid_lines: list[str] = []
     while True:
-        line = typer.prompt("…", default="")
+        line = _tp.prompt("…", default="")
         if not line.strip():
             break
         grid_lines.append(line)
@@ -334,21 +328,102 @@ def sweep_wizard():
     try:
         grid = parse_grid(grid_lines)
     except ValueError as e:
-        typer.echo(f"[red]ERROR[/red] {e}")
+        _tp.echo(f"[red]ERROR[/red] {e}")
         raise typer.Exit(code=1)
 
     combos = expand_grid(grid)
-    typer.echo(f"About to generate {len(combos)} presets. Continue? [y/N]")
-    confirm = typer.prompt(">", default="n").lower()
+    _tp.echo(f"About to generate {len(combos)} presets. Continue? [y/N]")
+    confirm = _tp.prompt(">", default="n").lower()
     if confirm != "y":
-        typer.echo("Aborted.")
+        _tp.echo("Aborted.")
         raise typer.Exit()
 
     for overrides in combos:
         path = generate_variant(dataset, profile, overrides)
-        typer.echo(f"  • {path}")
+        _tp.echo(f"  • {path}")
 
-    typer.echo("[green]Presets generated. You can now enqueue them via the Training tab in Gradio or CLI.[/green]")
+    _tp.echo("[green]Presets generated. You can now enqueue them via the Training tab in Gradio or CLI.[/green]")
+
+# ------------------------------
+# NEW: Integration enable/disable helpers
+# ------------------------------
+
+INTEGRATION_FLAGS = {
+    "gsheet": "AUTO_GSHEET_ENABLE",
+    "hf": "AUTO_HF_ENABLE",
+    "remote": "AUTO_REMOTE_ENABLE",
+}
+
+
+def _integration_status(name: str) -> bool:
+    """Return True if integration *name* is enabled."""
+    var = INTEGRATION_FLAGS.get(name.lower())
+    if not var:
+        return False
+    cfg = _load_int_cfg()
+    return (os.getenv(var) or str(cfg.get(var, "0"))) == "1"
+
+
+@int_app.command("list", help="Show available integrations and their status")
+def integrations_list():
+    table = Table(title="Integrations status")
+    table.add_column("Integration", style="cyan")
+    table.add_column("Enabled", style="green")
+    for name in sorted(INTEGRATION_FLAGS):
+        status = "✅" if _integration_status(name) else "❌"
+        table.add_row(name, status)
+    console.print(table)
+
+
+@int_app.command("enable", help="Enable a specific integration")
+def integrations_enable(
+    name: str = typer.Argument(..., help="Integration name: gsheet | hf | remote"),
+):
+    name = name.lower()
+    if name not in INTEGRATION_FLAGS:
+        console.print(f"[red]Unknown integration '{name}'. Use 'autotrain integrations list' to see options.[/red]")
+        raise typer.Exit(code=1)
+    cfg = _load_int_cfg()
+    cfg[INTEGRATION_FLAGS[name]] = "1"
+    _save_int_cfg(cfg)
+    console.print(f"[green]Integration '{name}' enabled.[/green]")
+
+
+@int_app.command("disable", help="Disable a specific integration")
+def integrations_disable(
+    name: str = typer.Argument(..., help="Integration name: gsheet | hf | remote"),
+):
+    name = name.lower()
+    if name not in INTEGRATION_FLAGS:
+        console.print(f"[red]Unknown integration '{name}'. Use 'autotrain integrations list' to see options.[/red]")
+        raise typer.Exit(code=1)
+    cfg = _load_int_cfg()
+    cfg[INTEGRATION_FLAGS[name]] = "0"
+    _save_int_cfg(cfg)
+    console.print(f"[yellow]Integration '{name}' disabled.[/yellow]")
+
+
+# Interactive panel to toggle integrations quickly
+@int_app.command("panel", help="Interactive panel to toggle integrations on/off")
+def integrations_panel():
+    """Show a table with integrations and allow toggling until user quits."""
+    while True:
+        integrations_list()
+        choice = typer.prompt("Enter integration to toggle (blank to exit)").strip().lower()
+        if not choice:
+            break
+        if choice not in INTEGRATION_FLAGS:
+            console.print("[red]Invalid integration name.[/red]")
+            continue
+        # Toggle current status
+        cfg = _load_int_cfg()
+        var = INTEGRATION_FLAGS[choice]
+        current = cfg.get(var, os.getenv(var, "0"))
+        cfg[var] = "0" if str(current) == "1" else "1"
+        _save_int_cfg(cfg)
+        new_state = "enabled" if cfg[var] == "1" else "disabled"
+        console.print(f"Integration '{choice}' is now {new_state}.")
+        console.print()
 
 from .gradio_app import _load_integrations_cfg as _load_int_cfg, _save_integrations_cfg as _save_int_cfg
 

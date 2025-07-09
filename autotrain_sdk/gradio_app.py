@@ -2933,6 +2933,10 @@ def launch(**launch_kwargs):  # pragma: no cover
 
     Accepts the same kwargs as ``gr.Blocks.launch`` (e.g., share=True).
     """
+    # Initialize environment variables from config file at startup
+    from .utils.common import initialize_integration_env_vars
+    initialize_integration_env_vars()
+    
     # Ensure external dataset folders are allowed so Gradio can serve previews
     from .dataset_sources import load_sources as _ds_load_src
 

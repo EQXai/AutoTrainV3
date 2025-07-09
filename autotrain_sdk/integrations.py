@@ -127,6 +127,9 @@ def _upload_to_hf(run_dir: Path) -> Tuple[bool, str]:
 
 
 def _upload_to_s3(run_dir: Path) -> Tuple[bool, str]:
+    # Early exit if disabled via flag
+    if os.getenv("AUTO_S3_ENABLE", "1") != "1":
+        return False, "S3 upload disabled"
     bucket = os.getenv("AUTO_S3_BUCKET")
     if not bucket:
         return False, "S3 bucket not configured"
@@ -152,6 +155,8 @@ def _upload_to_s3(run_dir: Path) -> Tuple[bool, str]:
 # ---------------------------------------------------------------------------
 
 def _send_webhook(payload: dict) -> Tuple[bool, str]:
+    if os.getenv("AUTO_WEBHOOK_ENABLE", "1") != "1":
+        return False, "Webhook disabled"
     url = os.getenv("AUTO_WEBHOOK_URL")
     if not url:
         return False, "Webhook URL not configured"
@@ -166,6 +171,8 @@ def _send_webhook(payload: dict) -> Tuple[bool, str]:
 
 
 def _send_email(subject: str, body: str) -> Tuple[bool, str]:
+    if os.getenv("AUTO_EMAIL_ENABLE", "1") != "1":
+        return False, "Email disabled"
     smtp_cfg = os.getenv("AUTO_EMAIL_SMTP")
     user = os.getenv("AUTO_EMAIL_USER")
     pwd = os.getenv("AUTO_EMAIL_PASS")
@@ -203,6 +210,8 @@ def _is_subpath(path: Path, base: Path) -> bool:
 
 
 def _transfer_to_remote(run_dir: Path) -> tuple[bool, str]:
+    if os.getenv("AUTO_REMOTE_ENABLE", "1") != "1":
+        return False, "Remote transfer disabled"
     remote_base = os.getenv("AUTO_REMOTE_BASE")
     if not remote_base:
         return False, "Remote base not configured"
@@ -346,22 +355,28 @@ def _append_to_gsheets(job, uploads: list[str] | None = None) -> Tuple[bool, str
     * ``AUTO_GSHEET_TAB``  – Optional worksheet name (defaults to first sheet).
     """
 
+    # Load configuration from file first to get enable flag
     cred_path = os.getenv("AUTO_GSHEET_CRED")
     sheet_id = os.getenv("AUTO_GSHEET_ID")
+    enable_flag = os.getenv("AUTO_GSHEET_ENABLE")
 
-    # Fallback: read stored config if env vars absent
-    if not cred_path or not sheet_id:
-        try:
-            from .gradio_app import _load_integrations_cfg  # lazy import
+    # Load stored config to fill in missing values
+    try:
+        from .gradio_app import _load_integrations_cfg  # lazy import
 
-            cfg = _load_integrations_cfg()
-            cred_path = cred_path or cfg.get("AUTO_GSHEET_CRED")
-            sheet_id = sheet_id or cfg.get("AUTO_GSHEET_ID")
-            tab_env = os.getenv("AUTO_GSHEET_TAB") or cfg.get("AUTO_GSHEET_TAB")
-            if tab_env:
-                os.environ["AUTO_GSHEET_TAB"] = str(tab_env)
-        except Exception:
-            pass
+        cfg = _load_integrations_cfg()
+        cred_path = cred_path or cfg.get("AUTO_GSHEET_CRED")
+        sheet_id = sheet_id or cfg.get("AUTO_GSHEET_ID")
+        enable_flag = enable_flag or cfg.get("AUTO_GSHEET_ENABLE", "0")
+        tab_env = os.getenv("AUTO_GSHEET_TAB") or cfg.get("AUTO_GSHEET_TAB")
+        if tab_env:
+            os.environ["AUTO_GSHEET_TAB"] = str(tab_env)
+    except Exception:
+        pass
+
+    # Early exit if disabled via flag (now checking both env and config)
+    if str(enable_flag) != "1":
+        return False, "Google Sheets disabled"
     # set env so future calls have it
     if cred_path:
         os.environ["AUTO_GSHEET_CRED"] = str(cred_path)
@@ -607,9 +622,20 @@ def handle_job_complete(job) -> None:  # type: ignore[valid-type]
                 uploads.append(msg)  # record errors except silent "not configured"
 
     # Always try to append to Google Sheets (even for failed/canceled runs)
-    ok, msg = _append_to_gsheets(job, uploads)
-    if not ok and "not configured" not in msg:
-        logger.warning(msg)
+    # But only if it's actually enabled to avoid spam warnings
+    gsheet_enabled = os.getenv("AUTO_GSHEET_ENABLE", "0")
+    if gsheet_enabled != "1":
+        try:
+            from .gradio_app import _load_integrations_cfg
+            cfg = _load_integrations_cfg()
+            gsheet_enabled = cfg.get("AUTO_GSHEET_ENABLE", "0")
+        except Exception:
+            pass
+    
+    if str(gsheet_enabled) == "1":
+        ok, msg = _append_to_gsheets(job, uploads)
+        if not ok and "not configured" not in msg and "disabled" not in msg.lower():
+            logger.warning(msg)
 
     # Build notification payload
     payload = {
@@ -624,13 +650,19 @@ def handle_job_complete(job) -> None:  # type: ignore[valid-type]
     lines = [f"Job {job.id} finished with status {job.status}."] + uploads
     subject = f"AutoTrainV2 job {job.id} – {job.status}"
 
-    ok, msg = _send_webhook(payload)
-    if not ok and "not configured" not in msg:
-        logger.warning(msg)
+    # Only try webhook/email if they might be configured to avoid spam warnings
+    webhook_url = os.getenv("AUTO_WEBHOOK_URL", "")
+    if webhook_url:
+        ok, msg = _send_webhook(payload)
+        if not ok and "not configured" not in msg:
+            logger.warning(msg)
 
-    ok, msg = _send_email(subject, body)
-    if not ok and "not configured" not in msg:
-        logger.warning(msg)
+    # Check if email might be configured before trying
+    smtp_server = os.getenv("AUTO_SMTP_SERVER", "")
+    if smtp_server:
+        ok, msg = _send_email(subject, body)
+        if not ok and "not configured" not in msg:
+            logger.warning(msg)
 
     # ---- compute and store metrics ----
     try:

@@ -27,6 +27,7 @@ __all__ = [
     "dataset_file_counts",
     "load_integration_config",
     "save_integration_config",
+    "initialize_integration_env_vars",
     "get_dataset_choices_for_ui",
 ]
 
@@ -177,6 +178,20 @@ def save_integration_config(config: Dict[str, Any]) -> None:
         if value is None:
             os.environ.pop(key, None)
         else:
+            os.environ[key] = str(value)
+
+
+def initialize_integration_env_vars() -> None:
+    """Initialize environment variables from config file if they're not already set.
+    
+    This should be called at program startup to ensure integration functions
+    work correctly even before any config changes are made.
+    """
+    config = load_integration_config()
+    
+    # Only set environment variables that aren't already set
+    for key, value in config.items():
+        if key not in os.environ and value is not None:
             os.environ[key] = str(value)
 
 
