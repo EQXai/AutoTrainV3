@@ -146,7 +146,7 @@ def create_input_folders(names: Iterable[str], *, input_dir: Path | None = None)
     return created
 
 
-def populate_output_structure(*, input_dir: Path | None = None, output_dir: Path | None = None, min_images: int = 0, repeats: int = 30) -> None:
+def populate_output_structure(*, input_dir: Path | None = None, output_dir: Path | None = None, min_images: int = 0, repeats: int = 30) -> tuple[int, int]:
     """Replicates the logic of *1.2.Output_Batch_Create.sh*.
 
     - Validates that each input folder contains images
@@ -164,6 +164,13 @@ def populate_output_structure(*, input_dir: Path | None = None, output_dir: Path
         If >0, raises ``ValueError`` when a folder doesn't meet the minimum.
     repeats: int
         Number of repeats for the special folder (default 30).
+        
+    Returns
+    -------
+    tuple[int, int]
+        A tuple of (created_count, skipped_count) where created_count is the number of
+        datasets processed successfully and skipped_count is the number of datasets that
+        already existed.
     """
 
     inp = input_dir or INPUT_DIR
@@ -183,9 +190,19 @@ def populate_output_structure(*, input_dir: Path | None = None, output_dir: Path
                     raise ValueError(f"Folder '{sub.name}' must contain at least {min_images} images.")
             valid_folders.append(sub)
 
+    created_count = 0
+    skipped_count = 0
+    
     for folder in valid_folders:
         name = folder.name
         dest_root = out / name
+        
+        # Check if structure already exists
+        if dest_root.exists() and (dest_root / "img").exists():
+            skipped_count += 1
+            logger.info("Dataset '%s' structure already exists, skipping.", name)
+            continue
+        
         (dest_root / "model").mkdir(parents=True, exist_ok=True)
         (dest_root / "log").mkdir(exist_ok=True)
         (dest_root / "img").mkdir(exist_ok=True)
@@ -198,8 +215,10 @@ def populate_output_structure(*, input_dir: Path | None = None, output_dir: Path
         
         # Create sample_prompts.txt file
         _create_sample_prompts_file(name, dest_root)
+        created_count += 1
 
     logger.info("Output structure populated successfully.")
+    return created_count, skipped_count
 
 
 def clean_workspace(*, delete_input: bool = True, delete_output: bool = True, delete_batchconfig: bool = True) -> None:

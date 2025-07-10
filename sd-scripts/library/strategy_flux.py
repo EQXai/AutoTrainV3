@@ -24,7 +24,17 @@ class FluxTokenizeStrategy(TokenizeStrategy):
     def __init__(self, t5xxl_max_length: int = 512, tokenizer_cache_dir: Optional[str] = None) -> None:
         self.t5xxl_max_length = t5xxl_max_length
         self.clip_l = self._load_tokenizer(CLIPTokenizer, CLIP_L_TOKENIZER_ID, tokenizer_cache_dir=tokenizer_cache_dir)
-        self.t5xxl = self._load_tokenizer(T5TokenizerFast, T5_XXL_TOKENIZER_ID, tokenizer_cache_dir=tokenizer_cache_dir)
+        
+        # Load T5 tokenizer with use_fast=False to avoid tiktoken issues
+        if tokenizer_cache_dir:
+            local_tokenizer_path = os.path.join(tokenizer_cache_dir, T5_XXL_TOKENIZER_ID.replace("/", "_"))
+            if os.path.exists(local_tokenizer_path):
+                self.t5xxl = T5TokenizerFast.from_pretrained(local_tokenizer_path, use_fast=False)
+            else:
+                self.t5xxl = T5TokenizerFast.from_pretrained(T5_XXL_TOKENIZER_ID, use_fast=False)
+                self.t5xxl.save_pretrained(local_tokenizer_path)
+        else:
+            self.t5xxl = T5TokenizerFast.from_pretrained(T5_XXL_TOKENIZER_ID, use_fast=False)
 
     def tokenize(self, text: Union[str, List[str]]) -> List[torch.Tensor]:
         text = [text] if isinstance(text, str) else text

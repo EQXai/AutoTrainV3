@@ -6,6 +6,7 @@ from .paths import (
     MODELS_DIR,
     LOGS_DIR,
     SD_SCRIPTS_DIR,
+    TEMPLATES_DIR,
 )
 from .dataset import create_input_folders, populate_output_structure, clean_workspace, create_sample_prompts, create_sample_prompts_for_dataset
 from .configurator import load_config, save_config, update_config, generate_presets, refresh_presets
@@ -23,6 +24,13 @@ from .utils.common import (
     format_dataset_status,
     get_dataset_summary,
 )
+from .pipeline import (
+    run_pipeline,
+    prepare_pipeline,
+    PipelineValidator,
+    PipelineExecutor,
+    SimplePipelineMonitor,
+)
 
 __all__ = [
     "get_project_root",
@@ -32,6 +40,7 @@ __all__ = [
     "MODELS_DIR",
     "LOGS_DIR",
     "SD_SCRIPTS_DIR",
+    "TEMPLATES_DIR",
     "create_input_folders",
     "populate_output_structure",
     "clean_workspace",
@@ -60,4 +69,10 @@ __all__ = [
     "save_integration_config",
     "format_dataset_status",
     "get_dataset_summary",
+    # Pipeline functions
+    "run_pipeline",
+    "prepare_pipeline",
+    "PipelineValidator",
+    "PipelineExecutor",
+    "SimplePipelineMonitor",
 ] 

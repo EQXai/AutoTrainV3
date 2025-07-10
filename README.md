@@ -1,13 +1,13 @@
-# AutoTrainV3
+# AutoTrainV2
 
-AutoTrainV3 is a Python toolkit that simplifies training of SDXL/Flux using the `sd-scripts` framework. It provides three user interfaces: Gradio Web UI, CLI, and Interactive Menu.
+AutoTrainV2 is a Python toolkit that simplifies training of Stable Diffusion models (Flux, FluxLORA, SDXL) using the `sd-scripts` framework. It provides three user interfaces: Gradio Web UI, CLI, and Interactive Menu.
 
 ---
 
 ## 🛠️ Installation
 
 ### Requirements
-- **OS**: Linux (Ubuntu 22.04+) or Windows with WSL2
+- **OS**: Linux (Ubuntu 20.04+) or Windows with WSL2
 - **GPU**: NVIDIA with 8GB+ VRAM
 - **Python**: 3.9+
 - **CUDA**: 12.8+ with compatible drivers
@@ -16,8 +16,8 @@ AutoTrainV3 is a Python toolkit that simplifies training of SDXL/Flux using the 
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/EQXai/AutoTrainV3.git
-cd AutoTrainV3
+git clone https://github.com/yourname/AutoTrainV2.git
+cd AutoTrainV2
 
 # 2. Run the automated setup script
 bash setup.sh
@@ -28,7 +28,7 @@ The setup script will automatically:
 - ✅ Install PyTorch with CUDA 12.8
 - ✅ Install xformers
 - ✅ Install all dependencies
-- ✅ Download models
+- ✅ Download base Flux models
 - ✅ Verify installation
 
 ---
@@ -38,7 +38,7 @@ The setup script will automatically:
 After installation, your project structure will be:
 
 ```
-AutoTrainV3/
+AutoTrainV2/
 ├── 📁 input/                    # Raw datasets (place your images here)
 │   └── dataset_name/
 │       ├── image_01.jpg         # Training images
@@ -68,7 +68,7 @@ AutoTrainV3/
 
 ## 🚀 Usage
 
-AutoTrainV3 provides three ways to use the system:
+AutoTrainV2 provides three ways to use the system:
 
 ### 1. Web Interface (Recommended)
 
@@ -82,6 +82,8 @@ source venv/bin/activate
 python -m autotrain_sdk web serve --share
 ```
 
+Open your browser to: http://127.0.0.1:7860
+
 **Web Interface Tabs:**
 - **Dataset**: Create and manage training datasets
 - **Config**: Edit training configurations visually
@@ -90,15 +92,76 @@ python -m autotrain_sdk web serve --share
 - **Model Organizer**: Manage completed models
 - **Integrations**: Configure external services
 
-### 2. Interactive Menu
+### 2. Automated Pipeline (NEW!)
 
+For complete automation from dataset to training:
 
 ```bash
 # Activate environment
 source venv/bin/activate
 
+# Complete pipeline in one command
+python -m autotrain_sdk pipeline run --dataset-path /path/to/dataset --profile Flux --monitor
+
+# Equivalent to all manual steps:
+# 1. Copy dataset to input/
+# 2. Build output structure
+# 3. Generate configuration
+# 4. Start training
+# 5. Monitor progress
+```
+
+### 3. Interactive Menu
+
+For guided, step-by-step usage:
+
+```bash
+# Activate environment
+source venv/bin/activate
+
+# Start Gradio UI
+python -m autotrain_sdk web serve --share
+
 # Start CLI menu
 python -m autotrain_sdk.menu
 ```
+
+---
+
+## 🚀 Pipeline Automatizado (Nuevo!)
+
+El pipeline automatizado permite ejecutar todo el proceso de entrenamiento con un solo comando:
+
+### Comando Básico
+```bash
+# Entrenamiento completo automatizado
+python -m autotrain_sdk pipeline run --dataset-path /path/to/dataset --profile Flux --monitor
+```
+
+### Opciones Avanzadas
+```bash
+# Con GPU específica y nombre personalizado
+python -m autotrain_sdk pipeline run \
+  --dataset-path /path/to/dataset \
+  --profile FluxLORA \
+  --dataset-name my_model \
+  --gpu 0,1 \
+  --monitor
+
+# Solo preparación (sin entrenar)
+python -m autotrain_sdk pipeline prepare --dataset-path /path/to/dataset --profile Flux
+
+# Dry run (mostrar plan sin ejecutar)
+python -m autotrain_sdk pipeline run --dataset-path /path/to/dataset --profile Flux --dry-run
+
+# Saltar copia si dataset ya existe
+python -m autotrain_sdk pipeline run --dataset-path /path/to/dataset --profile Flux --skip-copy
+```
+
+### Ventajas del Pipeline
+- **Un solo comando** reemplaza múltiples pasos manuales
+- **Validación automática** previene errores comunes
+- **Monitoreo integrado** sin intervención manual
+- **Manejo de errores** robusto con mensajes claros
 
 ---

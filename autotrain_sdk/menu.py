@@ -2641,53 +2641,96 @@ def run():  # noqa: D401 (simple verb)
         
         show_menu_with_refresh_info()
         
+        # Check for active jobs to show live monitor option
+        jobs = _JOB_MANAGER.list_jobs()
+        running_jobs = [j for j in jobs if j.status == JobStatus.RUNNING]
+        
+        # Build dynamic menu choices
+        menu_choices = []
+        
+        # Data Management
+        menu_choices.extend([
+            q.Separator("╔════════════════════╗"),
+            q.Separator("║  Data Management   ║"),
+            q.Separator("╚════════════════════╝"),
+            q.Choice(" » 1. Datasets", "datasets"),
+            q.Choice("   2. Presets", "presets"),
+            q.Separator("---------------"),
+        ])
+        
+        # Train & Jobs (with conditional Live Monitor)
+        menu_choices.extend([
+            q.Separator("╔══════════════════╗"),
+            q.Separator("║  Train & Jobs    ║"),
+            q.Separator("╚══════════════════╝"),
+        ])
+        
+        # Add Live Monitor option if there are running jobs
+        if running_jobs:
+            current_job = running_jobs[0]  # Show info for first running job
+            # Format job info with progress if available
+            job_info = f"{current_job.dataset} - {current_job.profile}"
+            if current_job.progress_str:
+                job_info += f" [{current_job.progress_str}]"
+            elif current_job.percent > 0:
+                job_info += f" [{current_job.percent:.0f}%]"
+            
+            # Show multiple jobs indicator if applicable
+            multiple_indicator = ""
+            if len(running_jobs) > 1:
+                multiple_indicator = f" +{len(running_jobs)-1} more"
+            
+            # Add thin box border around the live monitor option
+            live_text = f"🔴 LIVE: Monitor Training ({job_info}{multiple_indicator})"
+            
+            # Simple approach with ASCII-compatible box characters
+            top_border = "+------------------------------------------------------------------+"
+            bottom_border = "+------------------------------------------------------------------+"
+            content_line = f"|  {live_text}  |"
+            
+            menu_choices.extend([
+                q.Separator(top_border),
+                q.Choice(content_line, "live_monitor"),
+                q.Separator(bottom_border),
+            ])
+        
+        menu_choices.extend([
+            q.Choice("   3. Training", "training"),
+            q.Choice("   4. QuickTrain (1-Step)", "quicktrain"),
+            q.Choice("   5. Jobs", "jobs"),
+            q.Choice("   6. Logs", "logs"),
+            q.Separator("---------------"),
+            
+            # Analysis
+            q.Separator("╔════════════════╗"),
+            q.Separator("║  Analysis      ║"),
+            q.Separator("╚════════════════╝"),
+            q.Choice("   7. Experiments", "experiments"),
+            q.Choice("   8. Model Organizer", "organizer"),
+            q.Separator("---------------"),
+            
+            # Tools
+            q.Separator("╔════════════╗"),
+            q.Separator("║  Tools     ║"),
+            q.Separator("╚════════════╝"),
+            q.Choice("   9. Web Interface", "web"),
+            q.Choice("   0. Integrations", "integrations"),
+            q.Separator("---------------"),
+            
+            # System
+            q.Separator("╔═════════════╗"),
+            q.Separator("║  System     ║"),
+            q.Separator("╚═════════════╝"),
+            q.Choice("   s. Status", "status"),
+            q.Choice("   r. Refresh Now", "refresh"),
+            q.Separator("---------------"),
+            
+            q.Choice("   q. Exit", "exit"),
+        ])
+        
         choice = q.select(
             "",
-            choices=[
-                # Data Management
-                q.Separator("╔════════════════════╗"),
-                q.Separator("║  Data Management   ║"),
-                q.Separator("╚════════════════════╝"),
-                q.Choice(" » 1. Datasets", "datasets"),
-                q.Choice("   2. Presets", "presets"),
-                q.Separator("---------------"),
-                
-                # Train & Jobs
-                q.Separator("╔══════════════════╗"),
-                q.Separator("║  Train & Jobs    ║"),
-                q.Separator("╚══════════════════╝"),
-                q.Choice("   3. Training", "training"),
-                q.Choice("   4. QuickTrain (1-Step)", "quicktrain"),
-                q.Choice("   5. Jobs", "jobs"),
-                q.Choice("   6. Logs", "logs"),
-                q.Separator("---------------"),
-                
-                # Analysis
-                q.Separator("╔════════════════╗"),
-                q.Separator("║  Analysis      ║"),
-                q.Separator("╚════════════════╝"),
-                q.Choice("   7. Experiments", "experiments"),
-                q.Choice("   8. Model Organizer", "organizer"),
-                q.Separator("---------------"),
-                
-                # Tools
-                q.Separator("╔════════════╗"),
-                q.Separator("║  Tools     ║"),
-                q.Separator("╚════════════╝"),
-                q.Choice("   9. Web Interface", "web"),
-                q.Choice("   0. Integrations", "integrations"),
-                q.Separator("---------------"),
-                
-                # System
-                q.Separator("╔═════════════╗"),
-                q.Separator("║  System     ║"),
-                q.Separator("╚═════════════╝"),
-                q.Choice("   s. Status", "status"),
-                q.Choice("   r. Refresh Now", "refresh"),
-                q.Separator("---------------"),
-                
-                q.Choice("   q. Exit", "exit"),
-            ],
+            choices=menu_choices,
             instruction="",
         ).ask()
 
@@ -2721,6 +2764,8 @@ def run():  # noqa: D401 (simple verb)
             _web_menu()
         elif choice == 'integrations':
             _integrations_menu()
+        elif choice == 'live_monitor':
+            _training_monitor_menu()
         elif choice == 'status':
             _header_with_context("System Status", ["AutoTrainV2", "System"])
             _show_system_status()
@@ -4121,7 +4166,22 @@ def _training_batch_menu():
             console.print(f"[red]✗ {message}[/red]")
     
     console.print(f"\n[bold green]✅ Batch training completed! {success_count}/{len(results)} jobs enqueued successfully.[/bold green]")
-    _pause()
+    
+    # Auto-start monitoring if jobs were enqueued
+    if success_count > 0:
+        console.print("\n[bold cyan]🔄 Starting automatic monitoring...[/bold cyan]")
+        time.sleep(2)  # Brief pause to show the message
+        # Import and start CLI monitor
+        try:
+            import subprocess
+            import sys
+            subprocess.run([sys.executable, "-m", "autotrain_sdk", "train", "monitor"], check=False)
+        except Exception as e:
+            console.print(f"[yellow]Could not start monitor: {e}[/yellow]")
+            console.print("[dim]You can manually start monitoring with: python -m autotrain_sdk train monitor[/dim]")
+    
+    # Brief pause to show results before returning to menu
+    time.sleep(3)
 
 # ---------------------------------------------------------------------------
 # Enhanced Jobs Menu (Updated)

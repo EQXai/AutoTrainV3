@@ -22,6 +22,7 @@ BATCH_CONFIG_DIR: Path = PROJECT_ROOT / "BatchConfig"
 MODELS_DIR: Path = PROJECT_ROOT / "models"
 LOGS_DIR: Path = PROJECT_ROOT / "logs"
 SD_SCRIPTS_DIR: Path = PROJECT_ROOT / "sd-scripts"
+TEMPLATES_DIR: Path = PROJECT_ROOT / "templates"
 
 # Add any other frequently-used directories here as needed. 
 

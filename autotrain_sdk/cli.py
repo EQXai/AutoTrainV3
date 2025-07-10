@@ -29,6 +29,12 @@ Examples::
     autotrain train history --limit 5
     autotrain train clean --status done
     
+    # Pipeline Commands
+    autotrain pipeline run --dataset-path /path/to/dataset --profile Flux --monitor
+    autotrain pipeline prepare --dataset-path /path/to/dataset --profile FluxLORA
+    autotrain pipeline batch --datasets-dir /path/to/datasets --profile FluxLORA --monitor
+    autotrain pipeline status
+    
     # Web Interface
     autotrain web
     autotrain web --port 8080
@@ -273,6 +279,13 @@ app.add_typer(int_app, name="integrations")
 # Registry commands
 registry_app = typer.Typer(help="Manage run registry")
 app.add_typer(registry_app, name="registry")
+
+# --------------------------------------------------------------
+# Pipeline commands
+# --------------------------------------------------------------
+
+pipeline_app = typer.Typer(help="Automated training pipeline")
+app.add_typer(pipeline_app, name="pipeline")
 
 # --------------------------------------------------------------
 # Sweep commands
@@ -1280,6 +1293,191 @@ def train_clean(
             console.print(f"[yellow]Warning:[/yellow] Could not remove job {job.id}: {e}")
     
     console.print(f"[green]Cleaned {removed_count} job(s) from queue[/green]")
+
+
+# ---------------------------------------------------------------------------
+# Pipeline commands implementation
+# ---------------------------------------------------------------------------
+
+@pipeline_app.command("run", help="Run complete training pipeline from dataset to monitoring")
+def pipeline_run(
+    dataset_path: str = typer.Option(..., "--dataset-path", help="Path to external dataset directory"),
+    profile: str = typer.Option(..., "--profile", help="Training profile: Flux / FluxLORA / Nude"),
+    dataset_name: Optional[str] = typer.Option(None, "--dataset-name", help="Custom dataset name (default: folder name)"),
+    monitor: bool = typer.Option(False, "--monitor", help="Start live monitoring after training begins"),
+    min_images: int = typer.Option(1, "--min-images", help="Minimum number of images required"),
+    gpu_ids: Optional[str] = typer.Option(None, "--gpu", help="GPU IDs to use, e.g. '0,1'"),
+    skip_copy: bool = typer.Option(False, "--skip-copy", help="Skip copying dataset if it already exists"),
+    force: bool = typer.Option(False, "--force", help="Force overwrite existing datasets"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be done without executing"),
+    immediate: bool = typer.Option(False, "--immediate", help="Run training immediately instead of queueing"),
+):
+    """
+    Execute the complete training pipeline from external dataset to live monitoring.
+    
+    This command automates the entire process:
+    1. Copy dataset from external path to input/
+    2. Prepare output structure
+    3. Generate TOML configuration
+    4. Start training job
+    5. Monitor progress (if requested)
+    
+    Example:
+        autotrain pipeline run --dataset-path /home/user/dataset --profile Flux --monitor
+    """
+    from .pipeline import run_pipeline
+    
+    success = run_pipeline(
+        dataset_path=dataset_path,
+        profile=profile,
+        dataset_name=dataset_name,
+        monitor=monitor,
+        min_images=min_images,
+        gpu_ids=gpu_ids,
+        skip_copy=skip_copy,
+        force=force,
+        dry_run=dry_run,
+        immediate=immediate,
+    )
+    
+    if not success:
+        console.print("[red]Pipeline execution failed[/red]")
+        raise typer.Exit(code=1)
+
+
+@pipeline_app.command("prepare", help="Prepare dataset and configuration without training")
+def pipeline_prepare(
+    dataset_path: str = typer.Option(..., "--dataset-path", help="Path to external dataset directory"),
+    profile: str = typer.Option(..., "--profile", help="Training profile: Flux / FluxLORA / Nude"),
+    dataset_name: Optional[str] = typer.Option(None, "--dataset-name", help="Custom dataset name (default: folder name)"),
+    min_images: int = typer.Option(1, "--min-images", help="Minimum number of images required"),
+    skip_copy: bool = typer.Option(False, "--skip-copy", help="Skip copying dataset if it already exists"),
+    force: bool = typer.Option(False, "--force", help="Force overwrite existing datasets"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be done without executing"),
+):
+    """
+    Prepare dataset and configuration without starting training.
+    
+    This is useful for batch preparation or when you want to review
+    configurations before starting training.
+    
+    Example:
+        autotrain pipeline prepare --dataset-path /home/user/dataset --profile Flux
+    """
+    from .pipeline import prepare_pipeline
+    
+    success = prepare_pipeline(
+        dataset_path=dataset_path,
+        profile=profile,
+        dataset_name=dataset_name,
+        min_images=min_images,
+        skip_copy=skip_copy,
+        force=force,
+        dry_run=dry_run,
+    )
+    
+    if not success:
+        console.print("[red]Pipeline preparation failed[/red]")
+        raise typer.Exit(code=1)
+
+
+@pipeline_app.command("status", help="Show pipeline status and recent operations")
+def pipeline_status():
+    """Show status of recent pipeline operations and current training jobs."""
+    
+    # Show current training jobs
+    console.print("[bold blue]Current Training Jobs:[/bold blue]")
+    queue_table = _create_queue_table()
+    console.print(queue_table)
+    
+    # Show available datasets
+    console.print("\n[bold blue]Available Datasets:[/bold blue]")
+    from .gradio_app import _list_dataset_raw
+    datasets = _list_dataset_raw()
+    
+    if datasets:
+        dataset_table = Table()
+        dataset_table.add_column("Dataset", style="cyan")
+        dataset_table.add_column("Images", style="green")
+        dataset_table.add_column("Size", style="yellow")
+        
+        for dataset in datasets[:10]:  # Show first 10
+            from .gradio_app import _get_dataset_info
+            info = _get_dataset_info(dataset)
+            dataset_table.add_row(
+                dataset,
+                str(info.get('num_images', 'N/A')),
+                info.get('total_size', 'N/A')
+            )
+        
+        console.print(dataset_table)
+        
+        if len(datasets) > 10:
+            console.print(f"[dim]... and {len(datasets) - 10} more datasets[/dim]")
+    else:
+        console.print("[yellow]No datasets found in output/ directory[/yellow]")
+
+
+@pipeline_app.command("batch", help="Run pipeline for multiple datasets in batch")
+def pipeline_batch(
+    datasets_dir: Optional[str] = typer.Option(None, "--datasets-dir", help="Directory containing multiple dataset folders"),
+    dataset_paths: Optional[str] = typer.Option(None, "--dataset-paths", help="Comma-separated list of dataset paths"),
+    profile: str = typer.Option("FluxLORA", "--profile", help="Training profile: Flux / FluxLORA / Nude"),
+    monitor: bool = typer.Option(False, "--monitor", help="Start live monitoring after all jobs are enqueued"),
+    min_images: int = typer.Option(1, "--min-images", help="Minimum number of images required per dataset"),
+    gpu_ids: Optional[str] = typer.Option(None, "--gpu", help="GPU IDs to use, e.g. '0,1'"),
+    skip_copy: bool = typer.Option(False, "--skip-copy", help="Skip copying datasets if they already exist"),
+    force: bool = typer.Option(False, "--force", help="Force overwrite existing datasets"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be done without executing"),
+    max_concurrent: int = typer.Option(1, "--max-concurrent", help="Maximum concurrent jobs (currently only 1 supported)"),
+):
+    """
+    Execute the pipeline for multiple datasets in batch.
+    
+    This command automates the entire process for multiple datasets:
+    1. Auto-discover or parse dataset paths
+    2. Prepare each dataset (copy, structure, config)
+    3. Enqueue all training jobs
+    4. Monitor progress (if requested)
+    
+    Examples:
+        # Auto-discover datasets in a directory
+        autotrain pipeline batch --datasets-dir /path/to/datasets --profile FluxLORA --monitor
+        
+        # Process specific datasets
+        autotrain pipeline batch --dataset-paths "/path/to/dataset1,/path/to/dataset2" --profile Flux
+        
+        # Dry run to see what would be processed
+        autotrain pipeline batch --datasets-dir /path/to/datasets --profile FluxLORA --dry-run
+    """
+    from .pipeline import run_batch_pipeline
+    
+    try:
+        success = run_batch_pipeline(
+            datasets_dir=datasets_dir,
+            dataset_paths=dataset_paths,
+            profile=profile,
+            monitor=monitor,
+            min_images=min_images,
+            gpu_ids=gpu_ids,
+            skip_copy=skip_copy,
+            force=force,
+            dry_run=dry_run,
+            max_concurrent=max_concurrent,
+        )
+        
+        if success:
+            console.print("\n[green]✅ Batch pipeline completed successfully![/green]")
+        else:
+            console.print("\n[red]❌ Batch pipeline failed![/red]")
+            raise typer.Exit(code=1)
+            
+    except KeyboardInterrupt:
+        console.print("\n[yellow]🛑 Batch pipeline interrupted by user[/yellow]")
+        raise typer.Exit(code=1)
+    except Exception as e:
+        console.print(f"\n[red]❌ Batch pipeline error: {e}[/red]")
+        raise typer.Exit(code=1)
 
 
 # ---------------------------------------------------------------------------

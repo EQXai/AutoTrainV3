@@ -1,0 +1,86 @@
+{
+  "m14w00dh4ll:35e69d50cfe842d094aa2e7ad1fedfa2": {
+    "name": "m14w00dh4ll",
+    "path": "/home/eqx/dataset/m14w00dh4ll",
+    "image_count": 43,
+    "total_size": 9943135,
+    "status": "ProcessingStatus.PENDING",
+    "error_message": null,
+    "preparation_time": null,
+    "training_job_id": null,
+    "estimated_training_time": null,
+    "last_updated": "2025-07-10 17:08:28.181509"
+  },
+  "t1st:4ab91d4c044fbd423ec2ba5b7aa9e154": {
+    "name": "t1st",
+    "path": "/home/eqx/dataset/t1st",
+    "image_count": 23,
+    "total_size": 3199986,
+    "status": "ProcessingStatus.PENDING",
+    "error_message": null,
+    "preparation_time": null,
+    "training_job_id": null,
+    "estimated_training_time": null,
+    "last_updated": "2025-07-10 17:08:28.184862"
+  },
+  "t3t4s:16c317fe437cb7676c82a4674d3472b7": {
+    "name": "t3t4s",
+    "path": "/home/eqx/dataset/t3t4s",
+    "image_count": 30,
+    "total_size": 127789311,
+    "status": "ProcessingStatus.PENDING",
+    "error_message": null,
+    "preparation_time": null,
+    "training_job_id": null,
+    "estimated_training_time": null,
+    "last_updated": "2025-07-10 17:08:28.188267"
+  },
+  "sophieraiin:5c754aeefad50c5d0db63d5ab9b6a89f": {
+    "name": "sophieraiin",
+    "path": "/home/eqx/dataset/sophieraiin",
+    "image_count": 172,
+    "total_size": 89189668,
+    "status": "ProcessingStatus.PENDING",
+    "error_message": null,
+    "preparation_time": null,
+    "training_job_id": null,
+    "estimated_training_time": null,
+    "last_updated": "2025-07-10 17:08:28.197361"
+  },
+  "b09g13:034401c8e7e7cf0075220f0a312fd688": {
+    "name": "b09g13",
+    "path": "/home/eqx/dataset/b09g13",
+    "image_count": 62,
+    "total_size": 9708662,
+    "status": "ProcessingStatus.PENDING",
+    "error_message": null,
+    "preparation_time": null,
+    "training_job_id": null,
+    "estimated_training_time": null,
+    "last_updated": "2025-07-10 17:08:28.202097"
+  },
+  "dl4r0s4:b8030616c4e1e8b984fd5fc167c0f650": {
+    "name": "dl4r0s4",
+    "path": "/home/eqx/dataset/dl4r0s4",
+    "image_count": 34,
+    "total_size": 7172388,
+    "status": "ProcessingStatus.PENDING",
+    "error_message": null,
+    "preparation_time": null,
+    "training_job_id": null,
+    "estimated_training_time": null,
+    "last_updated": "2025-07-10 17:08:28.205481"
+  },
+  "ch3ls1:3b128ce1abe5a36052974d5cea6d36cd": {
+    "name": "ch3ls1",
+    "path": "/home/eqx/dataset/ch3ls1",
+    "image_count": 50,
+    "total_size": 11061797,
+    "status": "ProcessingStatus.PENDING",
+    "error_message": null,
+    "preparation_time": null,
+    "training_job_id": null,
+    "estimated_training_time": null,
+    "last_updated": "2025-07-10 17:08:28.209307"
+  }
+}

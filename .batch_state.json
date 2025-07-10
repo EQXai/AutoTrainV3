@@ -1,0 +1,86 @@
+{
+  "m14w00dh4ll": {
+    "name": "m14w00dh4ll",
+    "path": "/home/eqx/dataset/m14w00dh4ll",
+    "image_count": 43,
+    "total_size": 9943135,
+    "status": "ProcessingStatus.FAILED",
+    "error_message": "Preparation failed: [INFO] Folder 'input/m' ready.\n[INFO] Folder 'input/1' ready.\n[INFO] Folder 'input/4' ready.\n[INFO] Folder 'input/w' ready.\n[INFO] Folder 'input/0' ready.\n[INFO] Folder 'input/0' ready.\n[INFO] Folder 'input/d' ready.\n[INFO] Folder 'input/h' ready.\n[INFO] Folder 'input/4' ready.\n[INFO] Folder 'input/l' ready.\n[INFO] Folder 'input/l' ready.\n",
+    "preparation_time": null,
+    "training_job_id": null,
+    "estimated_training_time": null,
+    "last_updated": "2025-07-10 17:08:28.214340"
+  },
+  "t1st": {
+    "name": "t1st",
+    "path": "/home/eqx/dataset/t1st",
+    "image_count": 23,
+    "total_size": 3199986,
+    "status": "ProcessingStatus.FAILED",
+    "error_message": "Preparation failed: [INFO] Folder 'input/t' ready.\n[INFO] Folder 'input/1' ready.\n[INFO] Folder 'input/s' ready.\n[INFO] Folder 'input/t' ready.\n",
+    "preparation_time": null,
+    "training_job_id": null,
+    "estimated_training_time": null,
+    "last_updated": "2025-07-10 17:08:28.215309"
+  },
+  "t3t4s": {
+    "name": "t3t4s",
+    "path": "/home/eqx/dataset/t3t4s",
+    "image_count": 30,
+    "total_size": 127789311,
+    "status": "ProcessingStatus.FAILED",
+    "error_message": "Preparation failed: [INFO] Folder 'input/t' ready.\n[INFO] Folder 'input/3' ready.\n[INFO] Folder 'input/t' ready.\n[INFO] Folder 'input/4' ready.\n[INFO] Folder 'input/s' ready.\n",
+    "preparation_time": null,
+    "training_job_id": null,
+    "estimated_training_time": null,
+    "last_updated": "2025-07-10 17:08:29.397585"
+  },
+  "sophieraiin": {
+    "name": "sophieraiin",
+    "path": "/home/eqx/dataset/sophieraiin",
+    "image_count": 172,
+    "total_size": 89189668,
+    "status": "ProcessingStatus.FAILED",
+    "error_message": "Preparation failed: [INFO] Folder 'input/s' ready.\n[INFO] Folder 'input/o' ready.\n[INFO] Folder 'input/p' ready.\n[INFO] Folder 'input/h' ready.\n[INFO] Folder 'input/i' ready.\n[INFO] Folder 'input/e' ready.\n[INFO] Folder 'input/r' ready.\n[INFO] Folder 'input/a' ready.\n[INFO] Folder 'input/i' ready.\n[INFO] Folder 'input/i' ready.\n[INFO] Folder 'input/n' ready.\n",
+    "preparation_time": null,
+    "training_job_id": null,
+    "estimated_training_time": null,
+    "last_updated": "2025-07-10 17:08:29.418879"
+  },
+  "b09g13": {
+    "name": "b09g13",
+    "path": "/home/eqx/dataset/b09g13",
+    "image_count": 62,
+    "total_size": 9708662,
+    "status": "ProcessingStatus.FAILED",
+    "error_message": "Preparation failed: [INFO] Folder 'input/b' ready.\n[INFO] Folder 'input/0' ready.\n[INFO] Folder 'input/9' ready.\n[INFO] Folder 'input/g' ready.\n[INFO] Folder 'input/1' ready.\n[INFO] Folder 'input/3' ready.\n",
+    "preparation_time": null,
+    "training_job_id": null,
+    "estimated_training_time": null,
+    "last_updated": "2025-07-10 17:08:30.565926"
+  },
+  "dl4r0s4": {
+    "name": "dl4r0s4",
+    "path": "/home/eqx/dataset/dl4r0s4",
+    "image_count": 34,
+    "total_size": 7172388,
+    "status": "ProcessingStatus.FAILED",
+    "error_message": "Preparation failed: [INFO] Folder 'input/d' ready.\n[INFO] Folder 'input/l' ready.\n[INFO] Folder 'input/4' ready.\n[INFO] Folder 'input/r' ready.\n[INFO] Folder 'input/0' ready.\n[INFO] Folder 'input/s' ready.\n[INFO] Folder 'input/4' ready.\n",
+    "preparation_time": null,
+    "training_job_id": null,
+    "estimated_training_time": null,
+    "last_updated": "2025-07-10 17:08:30.667860"
+  },
+  "ch3ls1": {
+    "name": "ch3ls1",
+    "path": "/home/eqx/dataset/ch3ls1",
+    "image_count": 50,
+    "total_size": 11061797,
+    "status": "ProcessingStatus.FAILED",
+    "error_message": "Preparation failed: [INFO] Folder 'input/c' ready.\n[INFO] Folder 'input/h' ready.\n[INFO] Folder 'input/3' ready.\n[INFO] Folder 'input/l' ready.\n[INFO] Folder 'input/s' ready.\n[INFO] Folder 'input/1' ready.\n",
+    "preparation_time": null,
+    "training_job_id": null,
+    "estimated_training_time": null,
+    "last_updated": "2025-07-10 17:08:31.767945"
+  }
+}
